@@ -1,0 +1,13 @@
+// Define all necessary libraries
+#ifndef DEPENDENCIES
+#define DEPENDENCIES
+
+// Including standard libraries
+#include <iostream>
+#include <string>
+#include <cmath>
+#include <vector>
+#include <queue>
+#include <ctime>
+
+#endif
