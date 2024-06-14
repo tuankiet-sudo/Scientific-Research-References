@@ -5,12 +5,8 @@
     "type": "line",
     "data": [
         {
-            "file": "data/input/HPC_App/AMG/MemAvailable/1.csv",
-            "legend": "AMG mem avai"
-        },
-        {
-            "file": "data/input/HPC_App/AMG/MemFree/1.csv",
-            "legend": "AMG mem free"
+            "file": "data/input/synthesis/quadratic.csv",
+            "legend": "quadratic"
         }
     ]
 }

@@ -42,7 +42,7 @@ namespace HPCLab {
     class TimeSeries {
     private:
         int dimension;
-        std::queue<Data<T>*> series;  // FIFO queue
+        std::vector<Data<T>*> series;  // FIFO queue
 
     public:
         // Default dimension = 1
@@ -56,8 +56,8 @@ namespace HPCLab {
 
         ~TimeSeries() {
             while (!this->series.empty()) {
-                delete this->series.front();
-                this->series.pop();
+                delete this->series.back();
+                this->series.pop_back();
             }
         }
 
@@ -74,7 +74,7 @@ namespace HPCLab {
 
             Data<T>* data = new Data<T>(this->dimension, time);
             data->set_data(0, value);
-            this->series.push(data);
+            this->series.push_back(data);
         }
 
         void push(std::time_t time, T* value) {
@@ -83,14 +83,19 @@ namespace HPCLab {
                 data->set_data(i, value[i]);
             }
 
-            this->series.push(data);
+            this->series.push_back(data);
         }
 
-        Data<T>* pop() {
-            Data<T>* data = this->series.front();
-            this->series.pop();
+        std::vector<Data<T>*> get() {
+            return this->series;
+        }
 
-            return data;
+        Data<T>* get(int i) {
+            return this->series[i];
+        }
+
+        void reverse() {
+            std::reverse(this->series.begin(), this->series.end());
         }
 
     };

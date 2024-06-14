@@ -24,7 +24,8 @@ namespace HPCLab {
             delete[] this->coefficients;
         }
 
-        float substitute(const int vars) const {
+        template <typename T>
+        float substitute(const T vars) const {
             float result = this->coefficients[0];
             for (int i=1; i<this->degree+1; i++) {
                 result += this->coefficients[i]*pow(vars, i);
