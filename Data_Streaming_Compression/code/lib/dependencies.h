@@ -5,9 +5,11 @@
 // Including standard libraries
 #include <iostream>
 #include <string>
+#include <fstream>
 #include <cmath>
 #include <vector>
 #include <queue>
 #include <ctime>
+#include <utility>
 
 #endif

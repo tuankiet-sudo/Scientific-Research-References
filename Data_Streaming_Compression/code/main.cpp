@@ -22,14 +22,5 @@ void print(HPCLab::Matrix<float>* matrix) {
 
 int main() {
     HPCLab::TimeSeries<int> timeseries(1);
-
-    timeseries.push(0, 1);
-    timeseries.push(1, 20);
-    timeseries.push(2, 30);
-    timeseries.push(3, 40);
-    timeseries.push(4, 50);
-    timeseries.push(5, 60);
-
-    FastNormalEquation(timeseries, 3, 4.5);
     
 }
