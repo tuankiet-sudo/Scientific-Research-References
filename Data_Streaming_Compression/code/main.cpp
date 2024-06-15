@@ -2,25 +2,23 @@
 
 using namespace std;
 
-void print(HPCLab::Matrix<int>* matrix) {
-    for (int i=0; i<matrix->get_height(); i++) {
-        for (int j=0; j<matrix->get_width(); j++) {
-            cout << matrix->cell[i][j] << " ";
-        }
-        cout << endl;
-    }
-}
-
-void print(HPCLab::Matrix<float>* matrix) {
-    for (int i=0; i<matrix->get_height(); i++) {
-        for (int j=0; j<matrix->get_width(); j++) {
-            cout << matrix->cell[i][j] << " ";
-        }
-        cout << endl;
-    }
-}
-
 int main() {
-    HPCLab::TimeSeries<int> timeseries(1);
+    // fstream myFile("data/input/Synthesis/quadratic.csv", ios_base::in);
+    // std::string line;
+    // float val;
+
+    // while(std::getline(myFile, line)) {
+    //     std::stringstream ss(line);
+    //     while (ss >> val) {
+    //         std::cout << val << " ";
+    //         if (ss.peek() == ',') ss.ignore();
+    //     }
+    //     std::cout << std::endl;
+    // }
+
+    // myFile.close();
+
+    //HPCLab::TimeSeries<int> timeseries(1);
     
+    return 0;
 }

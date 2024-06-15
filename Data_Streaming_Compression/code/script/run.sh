@@ -19,6 +19,7 @@ if [[ $FLAG == "-c" ]]; then
     Compile
 fi
 
+cd "$WORK_DIR"
 "$WORK_DIR/bin/_exe"
 
 exit 0
