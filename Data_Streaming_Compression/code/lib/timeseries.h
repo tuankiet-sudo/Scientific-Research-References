@@ -3,49 +3,18 @@
 
 #include "dependencies.h"
 
-class DataType {
-  protected:
-    DataType val;
-
-  public:
-    enum Type {
-        INT, FLOAT, STRING
-    };
-
-    virtual Type type() = 0;
-    virtual DataType get() = 0;
-}
-
-class Int : DataType {
-    DataType::Type type() override {
-        return DataType::Type::INT;
-    }
-
-    DataType get() override {
-        return (int) this->val;
-    }
-}
-
 namespace HPCLab {
     // Source for manipulating time series data
     template <class T>
-    class Data { // Row
+    class Data {
       private:
         std::time_t time;
-        T* data;
+        T value;
 
       public:
-        Data(int dimension, std::time_t time) {
-            this->data = new T[dimension];
+        Data(std::time_t time, T val) {
+            this->value = val;
             this->time = time;
-        }
-
-        ~Data() {
-            delete[] this->data;
-        }
-
-        void set_data(int index, const T value) {
-            this->data[index] = value;
         }
 
         std::time_t unix_time() const {
@@ -56,27 +25,18 @@ namespace HPCLab {
             return std::localtime(&this->time);
         }
 
-        T* get_data() const {
-            return this->data;
+        T get_data() const {
+            return this->value;
         }
     };
 
     template <class T>
     class TimeSeries {
     private:
-        int dimension;
         std::vector<Data<T>*> series;  // FIFO queue
 
     public:
         // Default dimension = 1
-        TimeSeries() {
-            this->dimension = 1;
-        }
-
-        TimeSeries(int dimension) {
-            this->dimension = dimension;
-        }
-
         ~TimeSeries() {
             while (!this->series.empty()) {
                 delete this->series.back();
@@ -88,25 +48,8 @@ namespace HPCLab {
             return this->series.empty();
         }
 
-        // If dimension = 1
         void push(std::time_t time, const T value) {
-            if (this->dimension != 1) {
-                std::cout << "push(time_t, T) only use for dimension=1 timeseries !!" << std::endl;
-                exit(-1);
-            }
-
-            Data<T>* data = new Data<T>(this->dimension, time);
-            data->set_data(0, value);
-            this->series.push_back(data);
-        }
-
-        void push(std::time_t time, T* value) {
-            Data<T>* data = new Data<T>(this->dimension, time);
-            for (int i=0; i<dimension; i++) {
-                data->set_data(i, value[i]);
-            }
-
-            this->series.push_back(data);
+            this->series.push_back(new Data<T>(time, value));
         }
 
         std::vector<Data<T>*> get() {
@@ -121,6 +64,11 @@ namespace HPCLab {
             std::reverse(this->series.begin(), this->series.end());
         }
 
+        void print() {
+            for (Data<T>* data : this->series) {
+                std::cout << data->unix_time() << " " << data->get_data() << std::endl;
+            }
+        }
     };
 }
 
