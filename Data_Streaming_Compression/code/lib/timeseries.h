@@ -3,10 +3,33 @@
 
 #include "dependencies.h"
 
+class DataType {
+  protected:
+    DataType val;
+
+  public:
+    enum Type {
+        INT, FLOAT, STRING
+    };
+
+    virtual Type type() = 0;
+    virtual DataType get() = 0;
+}
+
+class Int : DataType {
+    DataType::Type type() override {
+        return DataType::Type::INT;
+    }
+
+    DataType get() override {
+        return (int) this->val;
+    }
+}
+
 namespace HPCLab {
     // Source for manipulating time series data
     template <class T>
-    class Data {
+    class Data { // Row
       private:
         std::time_t time;
         T* data;
