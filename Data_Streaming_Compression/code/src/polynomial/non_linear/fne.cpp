@@ -47,7 +47,7 @@ void FastNormalEquation(HPCLab::TimeSeries<int>& series, int degree, float bound
     std::vector<FNE> result;
 
     for (auto& data : series.get()) {
-        segment.push_back(data->get_data()[0]);
+        segment.push_back(data->get_data());
 
         if (segment.size() == degree+1) {
             model = calPolynomial(segment);
@@ -58,7 +58,7 @@ void FastNormalEquation(HPCLab::TimeSeries<int>& series, int degree, float bound
                 if (calError(temp_model, segment) > bound) {
                     result.push_back(FNE(segment.size()-1, model));
                     model = NULL;
-                    segment = {data->get_data()[0]};
+                    segment = {data->get_data()};
                 }
                 else {
                     HPCLab::Polynomial* temp = model;

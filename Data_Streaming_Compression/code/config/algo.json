@@ -1,0 +1,7 @@
+{
+    "input": "data/input/synthesis/quadratic.csv",
+    "output": "data/output/synthesis/",
+    "methods": [
+        "Pne", "APne", "SwingFilter", "SlideFilter"
+    ]
+}

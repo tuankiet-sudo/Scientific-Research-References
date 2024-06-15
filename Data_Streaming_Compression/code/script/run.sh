@@ -1,25 +1,15 @@
 #!/bin/bash
 
 WORK_DIR="$(pwd)"
-FLAG=$1
+PLOT_CONFIG="$WORK_DIR/config/plot.json"
+ALGO_CONFIG="$WORK_DIR/config/algo.json"
 
-function Compile() {
-    rm -rf "$WORK_DIR"/bin/*
+### Parsing json config
+INPUT=$(python3 python/parse_algo.py $ALGO_CONFIG input)
+OUTPUT=$(python3 python/parse_algo.py $ALGO_CONFIG output)
+METHODS=$(python3 python/parse_algo.py $ALGO_CONFIG methods)
 
-    cd "$WORK_DIR/bin"
-    for file in $(find "$WORK_DIR/src/" -type f); do
-        g++ -I "$WORK_DIR/include" -I "$WORK_DIR/lib" --std=c++11 -c "$file"
-    done
-    g++ -I "$WORK_DIR/include" -I "$WORK_DIR/lib" --std=c++11 -c "$WORK_DIR/main.cpp"
+$WORK_DIR/bin/_exe $INPUT $OUTPUT $METHODS
 
-    g++ "$WORK_DIR"/bin/*.o -o _exe
-}
-
-if [[ $FLAG == "-c" ]]; then
-    Compile
-fi
-
-cd "$WORK_DIR"
-"$WORK_DIR/bin/_exe"
-
-exit 0
+### Plotting all results
+#python3 "$WORK_DIR/plot.py" "$CONFIG"
