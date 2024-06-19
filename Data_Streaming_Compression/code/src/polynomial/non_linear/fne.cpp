@@ -141,18 +141,32 @@ HPCLab::Polynomial* calPolynomial(const std::vector<double>& data, int degree, s
     else return NULL;
 }
 
-void finalize(std::vector<FNE>& result, std::string path) {
+void finalize(std::vector<FNE>& result, std::string out_appro, std::string out_coeff) {
+    // Storing approximation result
     std::fstream file;
-    file.open(path, std::ofstream::out | std::ofstream::trunc);
+    file.open(out_appro, std::ofstream::out | std::ofstream::trunc);
 
     for (FNE& ele : result) {
         for (int i=0; i<ele.segment_length; i++) {
             file << i << "," << ele.model->substitute<int>(i) << std::endl;
         }
-        delete ele.model;
     }
     
     file.close();
+
+    // Storing coefficients of method
+    file.open(out_coeff, std::ofstream::out | std::ofstream::trunc);
+
+    for (FNE& ele : result) {
+        file << ele.segment_length << " " << ele.model->str() << std::endl;
+    }
+
+    file.close();
+
+    // Cleaning
+    for (FNE& ele : result) {
+        delete ele.model;
+    }
 
     for (auto it=dict.begin(); it!=dict.end(); it++) {
         delete it->second;
@@ -161,12 +175,12 @@ void finalize(std::vector<FNE>& result, std::string path) {
 }
 
 
-void normal_equation(HPCLab::TimeSeries& series, int degree, float bound, std::string mode, std::string output) {
+void normal_equation(int degree, float bound, std::string mode, std::string out_appro, std::string out_coeff) {
     std::vector<double> segment;
     HPCLab::Polynomial* model = NULL;
     std::vector<FNE> result;
 
-    for (auto& data : series.get()) {
+    for (auto& data : timeseries.get()) {
         segment.push_back(data->get_data());
 
         if (segment.size() == degree+1) {
@@ -196,7 +210,7 @@ void normal_equation(HPCLab::TimeSeries& series, int degree, float bound, std::s
         result.push_back(FNE(segment.size(), model));
     }
 
-    finalize(result, output);
+    finalize(result, out_appro, out_coeff);
 
 }
 

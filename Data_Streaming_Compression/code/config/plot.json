@@ -9,7 +9,7 @@
             "legend": "quadratic"
         },
         {
-            "file": "data/output/synthesis/pne.csv",
+            "file": "data/output/synthesis/pne_appro.csv",
             "legend": "pne"
         }
         
