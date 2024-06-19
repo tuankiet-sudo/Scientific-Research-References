@@ -39,6 +39,28 @@ namespace HPCLab {
             return this->width;
         }
 
+        T* toVec() const {
+            if (this->width == 1) {
+                T* vec = new T[this->height];
+                for (int i=0; i<this->height; i++) {
+                    vec[i] = this->cell[i][0];
+                }
+
+                return vec;
+            }
+            else if (this->height == 1){
+                T* vec = new T[this->width];
+                for (int i=0; i<this->width; i++) {
+                    vec[i] = this->cell[0][1];
+                }
+
+                return vec;
+            }
+            
+            std::cout << "Can not convert this matrix to vector !!" << std::endl;
+            exit(-1);
+        }
+
         Matrix<T>* transpose() const {
             Matrix<T>* matrix = new Matrix<T>(this->width, this->height);
             for (int i=0; i<this->width; i++) {
@@ -146,8 +168,6 @@ namespace HPCLab {
 
         return matrix;
     }
-
-    // Source for manipulating vector
 
 }
 

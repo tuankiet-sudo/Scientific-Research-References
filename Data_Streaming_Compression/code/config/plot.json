@@ -7,6 +7,11 @@
         {
             "file": "data/input/synthesis/quadratic.csv",
             "legend": "quadratic"
+        },
+        {
+            "file": "data/output/synthesis/pne.csv",
+            "legend": "pne"
         }
+        
     ]
 }

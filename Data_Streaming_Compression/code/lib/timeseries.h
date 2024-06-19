@@ -5,14 +5,13 @@
 
 namespace HPCLab {
     // Source for manipulating time series data
-    template <class T>
     class Data {
       private:
         std::time_t time;
-        T value;
+        double value;
 
       public:
-        Data(std::time_t time, T val) {
+        Data(std::time_t time, double val) {
             this->value = val;
             this->time = time;
         }
@@ -25,17 +24,17 @@ namespace HPCLab {
             return std::localtime(&this->time);
         }
 
-        T get_data() const {
+        double get_data() const {
             return this->value;
         }
     };
 
-    template <class T>
     class TimeSeries {
     private:
-        std::vector<Data<T>*> series;  // FIFO queue
+        std::vector<Data*> series;  // FIFO queue
 
     public:
+
         // Default dimension = 1
         ~TimeSeries() {
             while (!this->series.empty()) {
@@ -48,15 +47,15 @@ namespace HPCLab {
             return this->series.empty();
         }
 
-        void push(std::time_t time, const T value) {
-            this->series.push_back(new Data<T>(time, value));
+        void push(std::time_t time, const double value) {
+            this->series.push_back(new Data(time, value));
         }
 
-        std::vector<Data<T>*> get() {
+        std::vector<Data*> get() {
             return this->series;
         }
 
-        Data<T>* get(int i) {
+        Data* get(int i) {
             return this->series[i];
         }
 
@@ -65,7 +64,7 @@ namespace HPCLab {
         }
 
         void print() {
-            for (Data<T>* data : this->series) {
+            for (Data* data : this->series) {
                 std::cout << data->unix_time() << " " << data->get_data() << std::endl;
             }
         }

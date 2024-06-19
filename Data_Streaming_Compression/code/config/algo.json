@@ -1,7 +1,12 @@
 {
     "input": "data/input/synthesis/quadratic.csv",
-    "output": "data/output/synthesis/",
     "methods": [
-        "Pne", "APne", "SwingFilter", "SlideFilter"
+        {
+            "method": "NE",
+            "output": "data/output/synthesis/pne.csv",
+            "degree": 2,
+            "bound": 20,
+            "mode": "normal"
+        }
     ]
 }

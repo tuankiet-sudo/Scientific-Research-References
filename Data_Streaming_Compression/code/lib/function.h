@@ -7,7 +7,7 @@
 namespace HPCLab {
     // Source for manipulating polynomial function
     class Polynomial {
-      private:
+      public:
         int degree;
         float* coefficients;    // coefficient degree starts from 0 
 
