@@ -20,7 +20,7 @@ if __name__ == "__main__":
                 temp += "{}:{}\n".format(key, method[key].lower())
             elif key == "mode":
                 temp += "{}:{}\n".format(key, method[key].lower())
-            elif key == "output":
+            elif key == "out_appro" or key == "out_model":
                 create_dir(method[key])
                 temp += "{}:{}\n".format(key, method[key])
             else:

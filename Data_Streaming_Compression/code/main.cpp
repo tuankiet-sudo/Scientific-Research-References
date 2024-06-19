@@ -2,6 +2,8 @@
 
 using namespace std;
 
+HPCLab::TimeSeries timeseries;
+
 string loadConfig(string path) {
     string config = "";
 
@@ -14,11 +16,13 @@ string loadConfig(string path) {
     return config;
 }
 
-void run(HPCLab::TimeSeries& timeseries, string method, map<string, string>& params) {
-    if (method == "ne") normal_equation(timeseries, stoi(params["degree"]), stof(params["bound"]), params["mode"], params["output"]);
+void run(string method, map<string, string>& params) {
+    if (method == "ne") {
+        normal_equation(stoi(params["degree"]), stof(params["bound"]), params["mode"], params["out_appro"], params["out_coeff"]);
+    }
 }
 
-void loadTimeseries(string input, HPCLab::TimeSeries& timeseries) {
+void loadTimeseries(string input) {
     fstream inputFile(input, ios_base::in);
     string line; double val;
 
@@ -53,9 +57,9 @@ int main(int argc, char** argv) {
         if (key == "input") input = val;
     }
     
-    HPCLab::TimeSeries timeseries;
-    loadTimeseries(input, timeseries);
+    loadTimeseries(input);
     
+    // Run each approximation method
     int index; 
     string s = config.substr(split+2);
     while ((index = s.find('!')) != string::npos) {
@@ -69,7 +73,7 @@ int main(int argc, char** argv) {
             params[line.substr(0, deli)] = line.substr(deli+1);
         }
 
-        run(timeseries, method, params);
+        run(method, params);
         s.erase(0, index + 2);
     }
 

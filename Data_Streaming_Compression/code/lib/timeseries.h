@@ -71,4 +71,6 @@ namespace HPCLab {
     };
 }
 
+extern HPCLab::TimeSeries timeseries;
+
 #endif

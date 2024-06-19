@@ -3,10 +3,11 @@
     "methods": [
         {
             "method": "NE",
-            "output": "data/output/synthesis/pne.csv",
-            "degree": 2,
+            "out_appro": "data/output/synthesis/pne_appro.csv",
+            "out_coeff": "data/output/synthesis/pne_coeff",
+            "degree": 3,
             "bound": 20,
-            "mode": "normal"
+            "mode": "aperiodic"
         }
     ]
 }
