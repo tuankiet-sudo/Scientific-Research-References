@@ -6,12 +6,11 @@
     "data": [
         {
             "file": "data/input/synthesis/quadratic.csv",
-            "legend": "quadratic"
+            "legend": "raw"
         },
         {
-            "file": "data/output/synthesis/pne_appro.csv",
-            "legend": "pne"
+            "file": "data/output/synthesis/lf_appro.csv",
+            "legend": "slide filter"
         }
-        
     ]
 }
