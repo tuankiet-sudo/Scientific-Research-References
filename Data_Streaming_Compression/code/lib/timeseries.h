@@ -3,20 +3,22 @@
 
 #include "dependencies.h"
 
-namespace HPCLab {
-    // Source for manipulating time series data
-    class Data {
-      private:
-        std::time_t time;
-        double value;
+// Source for manipulating time series data
+class Data {};
 
-      public:
-        Data(std::time_t time, double val) {
-            this->value = val;
+template <class T>
+class Univariate : public Data {
+    private:
+        std::time_t time;
+        T value;
+    
+    public:
+        Univariate(std::time_t time, T val) {
             this->time = time;
+            this->value = val;
         }
 
-        std::time_t unix_time() const {
+        std::time_t get_time() const {
             return this->time;
         }
 
@@ -24,53 +26,38 @@ namespace HPCLab {
             return std::localtime(&this->time);
         }
 
-        double get_data() const {
+        T get_value() const {
             return this->value;
         }
-    };
+};
 
-    class TimeSeries {
+class TimeSeries {
     private:
-        std::vector<Data*> series;  // FIFO queue
+        int _index = 0;
+        std::vector<Data*> series;
 
     public:
-
-        // Default dimension = 1
-        ~TimeSeries() {
-            while (!this->series.empty()) {
-                delete this->series.back();
-                this->series.pop_back();
-            }
+        void push(Data* data) {
+            this->series.push_back(data);
         }
 
-        bool empty() const {
-            return this->series.empty();
+        Data* next() {
+            return this->series.at(this->_index++);
         }
 
-        void push(std::time_t time, const double value) {
-            this->series.push_back(new Data(time, value));
+        bool hasNext() {
+            return this->_index < this->series.size();
         }
 
-        std::vector<Data*> get() {
-            return this->series;
+        void reset() {
+            this->_index = 0;
         }
 
-        Data* get(int i) {
-            return this->series[i];
-        }
-
-        void reverse() {
-            std::reverse(this->series.begin(), this->series.end());
-        }
-
-        void print() {
+        void finalize() {
             for (Data* data : this->series) {
-                std::cout << data->unix_time() << " " << data->get_data() << std::endl;
+                delete data;
             }
         }
-    };
-}
-
-extern HPCLab::TimeSeries timeseries;
+};
 
 #endif
