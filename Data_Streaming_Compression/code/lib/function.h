@@ -1,8 +1,55 @@
-// Define all necessary mathematics function
 #ifndef FUNCTION
 #define FUNCTION
 
 #include "dependencies.h"
+
+struct Point2D {
+    float x;
+    float y;
+
+    Point2D(float x, float y) {
+        this->x = x;
+        this->y = y;
+    }
+};
+
+// Geometry function support timeseries analysis
+class Line {
+    private:
+        float slope;
+        float intercept;
+
+    public:
+        Line(float slope, float intercept) {
+            this->slope = slope;
+            this->intercept = intercept;
+        }
+
+        float substitute(float x) {
+            return this->slope * x + this->intercept;
+        }
+
+        static Line* line(Point2D* p1, Point2D* p2) {
+            float slope = (p1->y - p2->y) / (p1->x-p2->x);
+            float intercept = p1->y - slope*p1->x;
+
+            return new Line(slope, intercept);
+        }
+
+        static Line* line(float slope, Point2D* p) {
+            float intercept = p->y - slope*p->x;
+
+            return new Line(slope, intercept);
+        }
+
+        static Point2D* intersection(Line* l1, Line* l2) {
+            float x = (l1->intercept - l2->intercept) / (l2->slope - l1->slope);
+            float y = l1->intercept + l1->slope*x;
+
+            return new Point2D(x, y); 
+        }
+
+};
 
 // Source for manipulating polynomial function
 class Polynomial {

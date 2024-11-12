@@ -1,103 +1,81 @@
-// #include "dependencies.h"
-// #include "polynomial/constant.h"
+#include "dependencies.h"
+#include "piecewise-approximation/constant.h"
 
-// // PMC: poor man compression
-// namespace PMC {
+void PMC::_yield(BinObj* obj, int offset, float value) {
+    obj->put(offset);
+    obj->put(value);
+}
 
-//     struct PMC {
-//         int end_point;
-//         double value;
+void PMC::_approximate(IterIO& file, int interval, time_t basetime, int prev_point, int end_point, float value) {
+    while (prev_point <= end_point) {
+        CSVObj obj;
+        obj.pushData(std::to_string(basetime + prev_point));
+        obj.pushData(std::to_string(value));
 
-//         PMC(int end_point, double value) {
-//             this->end_point = end_point;
-//             this->value = value;
-//         }
-//     };
+        file.writeStr(&obj);
+        prev_point += interval;
+    }
+}
 
-//     void finalize(std::vector<PMC>& result, std::string out_appro, std::string out_coeff) {
-//         // Storing approximation result
-//         std::fstream file;
-//         file.open(out_appro, std::ofstream::out | std::ofstream::trunc);
+void PMC::compress(TimeSeries& timeseries, std::string mode, float bound, std::string output) {
+    double min = INFINITY;
+    double max = -INFINITY;
+    double value = 0; 
+    int length = 0;
+    time_t time = -1;
+    IterIO outputFile(output, false);
+    BinObj* obj = new BinObj;
 
-//         int end = -1; int index = 0;
-//         for (PMC& ele : result) {
-//             for (int i=0; i<ele.end_point-end; i++) {
-//                 file << index++ << "," << ele.value << std::endl;
-//             }
-//             end = ele.end_point;
-//         }
+    while (timeseries.hasNext()) {
+        Univariate<float>* data = (Univariate<float>*) timeseries.next();
+        if (time == -1) {
+            time = data->get_time();
+            obj->put(time);
+        }
+
+        min = min < data->get_value() ? min : data->get_value();
+        max = max > data->get_value() ? max : data->get_value();
+        if (mode == "midrange") {
+            if (max - min > 2 * bound || !timeseries.hasNext()) {
+                PMC::_yield(obj, data->get_time() - time, value);
+                min = data->get_value();
+                max = data->get_value();
+            }
+            value = (max + min) / 2;
+        }
+        else if (mode == "mean") {
+            if (abs(value - max) > bound || abs(value - min) > bound || !timeseries.hasNext()) {
+                PMC::_yield(obj, data->get_time() - time, value);
+                min = data->get_value();
+                max = data->get_value();
+                length = 0;
+            }
+            value = (value * length + data->get_value()) / (length+1);
+            length++;
+        }
+    }
+
+    outputFile.writeBin(obj);
+    outputFile.close();
+    delete obj;
+}
+
+void PMC::decompress(std::string input, std::string output, int interval) {
+    IterIO inputFile(input, true, true);
+    IterIO outputFile(output, false);
+    BinObj* r_obj = inputFile.readBin();
+
+    int prev_point = 0;
+    time_t time = r_obj->getLong();
+    while (r_obj->getSize() != 0) {
+        int end_point = r_obj->getInt();
+        float value = r_obj->getFloat();
         
-//         file.close();
+        PMC::_approximate(outputFile, interval, time, prev_point, end_point, value);
+        prev_point = end_point + interval;
+    }
 
-//         // Storing coefficients of method
-//         file.open(out_coeff, std::ofstream::out | std::ofstream::trunc);
-
-//         for (PMC& ele : result) {
-//             file << ele.end_point << " " << ele.value << std::endl;
-//         }
-
-//         file.close();
-//     }
-
-//     // Begin: section of algorithm described in paper
-//     void mid_range(float bound, std::string out_appro, std::string out_coeff) {
-//         std::vector<PMC> results;
-//         int n = 0;
-//         double m = INFINITY;
-//         double M = -INFINITY;
-
-//         for (int i=0; i<timeseries.get().size(); i++) {
-//             double data = timeseries.get()[i]->get_data();
-//             double max = M > data ? M : data;
-//             double min = m < data ? m : data;
-//             if (max - min > 2*bound) {
-//                 results.push_back(PMC(n-1, (m+M)/2));
-//                 m = data;
-//                 M = data;
-//             }
-//             else {
-//                 m = min;
-//                 M = max;
-//             }
-//             n = n + 1;
-//         }
-//         results.push_back(PMC(n-1, (m+M)/2));
-
-//         finalize(results, out_appro, out_coeff);
-//     }
-
-//     void mean(float bound, std::string out_appro, std::string out_coeff) {
-//         std::vector<PMC> results;
-//         int n = 0;
-//         double m = INFINITY;
-//         double M = -INFINITY;
-//         double mean = 0;
-//         int current_length = 1;
-
-//         for (int i=0; i<timeseries.get().size(); i++) {
-//             double data = timeseries.get()[i]->get_data();
-//             double current_mean = (mean*(current_length-1) + data)/current_length;
-//             double max = M > data ? M : data;
-//             double min = m < data ? m : data;
-
-//             if (abs(mean-max)>bound || abs(mean-min)>bound) {
-//                 results.push_back(PMC(n-1, mean));
-//                 m = data;
-//                 M = data;
-//                 mean = data;
-//                 current_length = 1;
-//             }
-//             else {
-//                 m = min;
-//                 M = max;
-//                 mean = current_mean;
-//             }
-//             current_length = current_length + 1;
-//             n = n + 1;
-//         }
-//         results.push_back(PMC(n-1, mean));
-
-//         finalize(results, out_appro, out_coeff);
-//     }
-    
-// }
+    delete r_obj;
+    inputFile.close();
+    outputFile.close();
+}

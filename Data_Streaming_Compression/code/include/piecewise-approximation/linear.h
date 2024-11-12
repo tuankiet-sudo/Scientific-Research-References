@@ -10,7 +10,7 @@ class SwingFilter {
 
     public:
         static void compress(TimeSeries& timeseries, float bound, std::string output);
-        static void decompress(std::string input, std::string output);
+        static void decompress(std::string input, std::string output, int interval);
 };
 
 class SlideFilter {
@@ -20,5 +20,5 @@ class SlideFilter {
 
     public:
         static void compress(TimeSeries& timeseries, float bound, std::string output);
-        static void decompress(std::string input, std::string output);
+        static void decompress(std::string input, std::string output, int interval);
 };
