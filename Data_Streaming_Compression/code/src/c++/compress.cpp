@@ -5,6 +5,7 @@
 
 using namespace std;
 
+bool Monitor::flag;
 
 TimeSeries loadTimeseries(string input) {
     TimeSeries timeseries;
@@ -30,44 +31,58 @@ int main(int argc, char** argv) {
         throw std::invalid_argument("Missing required parameters.");
     }
 
-    const string INPUT = argv[1];
-    const string OUTPUT = argv[2];
-    const string ALGO = argv[3];
-    const float ERROR = atof(argv[4]);
+    string input = "";
 
-    TimeSeries timeseries = loadTimeseries(INPUT);
-    if (ALGO == "pmc") {
-        if (argc < 6) {
-            throw std::invalid_argument("PMC ALgo: Missing MODE parameter.");
+    thread thread(&Monitor::start);
+    while (true) {
+        cout << "Enter: ";
+        cin >> input;
+        if (input == "stop") {
+            Monitor::stop();
+            break;
         }
+    }
+
+    thread.join();
+
+    // const string INPUT = argv[1];
+    // const string OUTPUT = argv[2];
+    // const string ALGO = argv[3];
+    // const float ERROR = atof(argv[4]);
+
+    // TimeSeries timeseries = loadTimeseries(INPUT);
+    // if (ALGO == "pmc") {
+    //     if (argc < 6) {
+    //         throw std::invalid_argument("PMC ALgo: Missing MODE parameter.");
+    //     }
         
-        PMC::compress(timeseries, argv[5], ERROR, OUTPUT);
-    }
-    else if (ALGO == "hybrid-pmc") {
-        if (argc < 7) {
-            throw std::invalid_argument("PMC ALgo: Missing W_SIZE or/and M_WINDOW parameters.");
-        }
+    //     PMC::compress(timeseries, argv[5], ERROR, OUTPUT);
+    // }
+    // else if (ALGO == "hybrid-pmc") {
+    //     if (argc < 7) {
+    //         throw std::invalid_argument("PMC ALgo: Missing W_SIZE or/and M_WINDOW parameters.");
+    //     }
 
-        HybridPMC::compress(timeseries, atoi(argv[5]), atoi(argv[6]), ERROR, OUTPUT);
-    }
-    else if (ALGO == "swing") {
-        SwingFilter::compress(timeseries, ERROR, OUTPUT);
-    }
-    else if (ALGO == "slide") {
-        SlideFilter::compress(timeseries, ERROR, OUTPUT);
-    }
-    else if (ALGO == "normal-equation") {
-        if (argc < 6) {
-            throw std::invalid_argument("Normal-Equation ALgo: Missing DEGREE parameter.");
-        }
+    //     HybridPMC::compress(timeseries, atoi(argv[5]), atoi(argv[6]), ERROR, OUTPUT);
+    // }
+    // else if (ALGO == "swing") {
+    //     SwingFilter::compress(timeseries, ERROR, OUTPUT);
+    // }
+    // else if (ALGO == "slide") {
+    //     SlideFilter::compress(timeseries, ERROR, OUTPUT);
+    // }
+    // else if (ALGO == "normal-equation") {
+    //     if (argc < 6) {
+    //         throw std::invalid_argument("Normal-Equation ALgo: Missing DEGREE parameter.");
+    //     }
 
-        NormalEquation::compress(timeseries, atoi(argv[5]), ERROR, OUTPUT);
-    }
-    else {
-        ofstream("data/output/talatrau/abc.txt");
-        ofstream("data/output/abc.txt");
-    }
+    //     NormalEquation::compress(timeseries, atoi(argv[5]), ERROR, OUTPUT);
+    // }
+    // else {
+    //     ofstream("data/output/talatrau/abc.txt");
+    //     ofstream("data/output/abc.txt");
+    // }
 
-    timeseries.finalize();
+    // timeseries.finalize();
     return 0;
 }
