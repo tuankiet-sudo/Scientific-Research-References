@@ -35,13 +35,20 @@ int main(int argc, char** argv) {
     const string ALGO = argv[3];
     const float ERROR = atof(argv[4]);
 
-    TimeSeries timeseries = loadTimeseries("data/input/synthesis/quadratic.csv");
+    TimeSeries timeseries = loadTimeseries(INPUT);
     if (ALGO == "pmc") {
         if (argc < 6) {
             throw std::invalid_argument("PMC ALgo: Missing MODE parameter.");
         }
-
+        
         PMC::compress(timeseries, argv[5], ERROR, OUTPUT);
+    }
+    else if (ALGO == "hybrid-pmc") {
+        if (argc < 7) {
+            throw std::invalid_argument("PMC ALgo: Missing W_SIZE or/and M_WINDOW parameters.");
+        }
+
+        HybridPMC::compress(timeseries, atoi(argv[5]), atoi(argv[6]), ERROR, OUTPUT);
     }
     else if (ALGO == "swing") {
         SwingFilter::compress(timeseries, ERROR, OUTPUT);
@@ -55,6 +62,10 @@ int main(int argc, char** argv) {
         }
 
         NormalEquation::compress(timeseries, atoi(argv[5]), ERROR, OUTPUT);
+    }
+    else {
+        ofstream("data/output/talatrau/abc.txt");
+        ofstream("data/output/abc.txt");
     }
 
     timeseries.finalize();

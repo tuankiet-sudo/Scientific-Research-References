@@ -1,4 +1,3 @@
-#include "dependencies.h"
 #include "piecewise-approximation/constant.h"
 
 void PMC::_yield(BinObj* obj, int offset, float value) {
@@ -18,13 +17,14 @@ void PMC::_approximate(IterIO& file, int interval, time_t basetime, int prev_poi
 }
 
 void PMC::compress(TimeSeries& timeseries, std::string mode, float bound, std::string output) {
-    double min = INFINITY;
-    double max = -INFINITY;
-    double value = 0; 
+    float min = INFINITY;
+    float max = -INFINITY;
+    float value = 0; 
     int length = 0;
     time_t time = -1;
     IterIO outputFile(output, false);
     BinObj* obj = new BinObj;
+    Univariate<float>* prev_data = nullptr;
 
     while (timeseries.hasNext()) {
         Univariate<float>* data = (Univariate<float>*) timeseries.next();
@@ -36,16 +36,16 @@ void PMC::compress(TimeSeries& timeseries, std::string mode, float bound, std::s
         min = min < data->get_value() ? min : data->get_value();
         max = max > data->get_value() ? max : data->get_value();
         if (mode == "midrange") {
-            if (max - min > 2 * bound || !timeseries.hasNext()) {
-                PMC::_yield(obj, data->get_time() - time, value);
+            if (max - min > 2 * bound) {
+                PMC::_yield(obj, prev_data->get_time() - time, value);
                 min = data->get_value();
                 max = data->get_value();
             }
             value = (max + min) / 2;
         }
         else if (mode == "mean") {
-            if (abs(value - max) > bound || abs(value - min) > bound || !timeseries.hasNext()) {
-                PMC::_yield(obj, data->get_time() - time, value);
+            if (abs(value - max) > bound || abs(value - min) > bound) {
+                PMC::_yield(obj, prev_data->get_time() - time, value);
                 min = data->get_value();
                 max = data->get_value();
                 length = 0;
@@ -53,7 +53,10 @@ void PMC::compress(TimeSeries& timeseries, std::string mode, float bound, std::s
             value = (value * length + data->get_value()) / (length+1);
             length++;
         }
+
+        prev_data = data;
     }
+    PMC::_yield(obj, prev_data->get_time(), value);
 
     outputFile.writeBin(obj);
     outputFile.close();

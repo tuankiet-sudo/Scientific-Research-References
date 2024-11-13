@@ -18,6 +18,9 @@ int main(int argc, char** argv) {
     if (ALGO == "pmc") {
         PMC::decompress(INPUT, OUTPUT, INTERVAL);
     }
+    else if (ALGO == "hybrid-pmc") {
+        HybridPMC::decompress(INPUT, OUTPUT, INTERVAL);
+    }
     else if (ALGO == "swing") {
         SwingFilter::decompress(INPUT, OUTPUT, INTERVAL);
     }

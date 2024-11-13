@@ -1,4 +1,3 @@
-#include "dependencies.h"
 #include "piecewise-approximation/polynomial.h"
 
 std::map<int, Matrix<float>*> NormalEquation::cache;

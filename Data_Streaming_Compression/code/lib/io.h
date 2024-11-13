@@ -195,8 +195,12 @@ class CSVObj : public IOObj {
 
 class BatchIO {
     public:
-        static void write(std::string filename, IOObj* obj) {
-            std::ofstream file(filename);
+        static void write(std::string filename, IOObj* obj, bool append = false) {
+            std::ofstream file;
+
+            if (!append) file.open(filename);
+            else file.open(filename, std::ios::app);
+
             while (obj != nullptr) {
                 file << obj->toStr();
                 obj = obj->getNext();
