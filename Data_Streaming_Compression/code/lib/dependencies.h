@@ -15,6 +15,10 @@
 #include <queue>
 #include <ctime>
 #include <utility>
+#include <chrono>
 #include <stdexcept>
+#include <thread>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #endif

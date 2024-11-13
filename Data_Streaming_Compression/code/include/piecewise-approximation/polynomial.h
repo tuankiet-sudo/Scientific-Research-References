@@ -1,6 +1,7 @@
 #include "dependencies.h"
 #include "matrix.h"
 #include "function.h"
+#include "monitor.h"
 #include "timeseries.h"
 #include "io.h"
 

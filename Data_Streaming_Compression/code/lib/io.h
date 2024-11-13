@@ -250,7 +250,7 @@ class IterIO {
 
     public:
         IterIO(std::string filename, bool read, bool binary = false, bool append = false) {
-            int flag = read ? std::ios::in : std::ios::out;
+            auto flag = read ? std::ios::in : std::ios::out;
             if (binary) flag = flag | std::ios::binary;
             if (append) flag = flag | std::ios::app;
             
