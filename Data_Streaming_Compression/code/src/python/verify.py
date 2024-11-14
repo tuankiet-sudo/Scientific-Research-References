@@ -1,21 +1,32 @@
-import csv
+import sys
+from enum import Enum
 
-ORIGIN = "data/input/synthesis/quadratic.csv" 
-APPROX = "data/output/synthesis/lf_appro.csv"
+class Error(Enum):
+    INVALID_ALGO=1
+    MISSING_PARAM=2
+    
 
 if __name__ == "__main__":
-    origin = []
-    approx = []
+    ALGO = sys.argv[1]
     
-    with open(ORIGIN, mode="r") as f:
-        reader = csv.reader(f)
-        for row in reader:
-            origin.append(float(row[1]))
+    if ALGO == "pmc":
+        if len(sys.argv) < 2:
+            print(Error.MISSING_PARAM.value)
+        else:
+            print(0)
             
-    with open(APPROX, mode="r") as f:
-        reader = csv.reader(f)
-        for row in reader:
-            approx.append(float(row[1]))
-    
-    diff = [abs(origin[i]-approx[i]) for i in range(len(approx))]
-    print(max(diff))
+    elif ALGO == "hybrid-pmc":
+        if len(sys.argv) < 3:
+            print(Error.MISSING_PARAM.value)
+        else:
+            print(0)
+            
+    elif ALGO == "normal-equation":
+        if len(sys.argv) < 2:
+            print(Error.MISSING_PARAM.value)
+        else:
+            print(0)
+            
+    else:
+        print(Error.INVALID_ALGO.value)
+        

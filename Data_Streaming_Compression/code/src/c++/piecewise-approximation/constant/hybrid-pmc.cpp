@@ -66,6 +66,7 @@ void HybridPMC::compress(TimeSeries& timeseries, int w_size, int m_window, float
     std::vector<float> buffer;
     
     Monitor::clockReset();
+    int count = 0;
     while (timeseries.hasNext()) {
         Univariate<float>* data = (Univariate<float>*) timeseries.next();
         Monitor::startClock();
@@ -88,17 +89,15 @@ void HybridPMC::compress(TimeSeries& timeseries, int w_size, int m_window, float
                 float w_min = *std::min_element(window.begin(), window.end());
                 float w_max = *std::max_element(window.begin(), window.end());
 
-                if (w_max - w_min <= 2 * bound) {
-                    HybridPMC::_merge(obj, buffer, true, w_size, m_window);
-                    buffer = window;
-                }
-                else {
-                    buffer.resize(buffer.size() - window.size());
-                    HybridPMC::_split(obj, window, bound);
-                }
+                HybridPMC::_merge(obj, buffer, true, w_size, m_window);
+                buffer.clear();
+
+                if (w_max - w_min <= 2 * bound) buffer = window;
+                else HybridPMC::_split(obj, window, bound);
             }
         }
 
+        count += 1;
         Monitor::endClock();
     }
 
