@@ -5,16 +5,28 @@
 
 using namespace std;
 
+int Monitor::counter;
+double Monitor::latency;
+bool Monitor::flag = false;
+high_resolution_clock::time_point Monitor::clock;
+
+
 int main(int argc, char** argv) {
-    if (argc < 5) { 
+    if (argc < 6) { 
         throw std::invalid_argument("Missing required parameters.");
     }
 
     const string INPUT = argv[1];
     const string OUTPUT = argv[2];
-    const string ALGO = argv[3];
-    const int INTERVAL = atoi(argv[4]);
+    const string OUT_MONITOR = argv[3];
+    const string ALGO = argv[4];
+    const int INTERVAL = atoi(argv[5]);
 
+    std::thread monitor(&Monitor::monitor, OUT_MONITOR);
+    Monitor::clockReset();
+    Monitor::start();
+
+    Monitor::startClock();
     if (ALGO == "pmc") {
         PMC::decompress(INPUT, OUTPUT, INTERVAL);
     }
@@ -30,6 +42,11 @@ int main(int argc, char** argv) {
     else if (ALGO == "normal-equation") {
         NormalEquation::decompress(INPUT, OUTPUT, INTERVAL);
     }
+    Monitor::endClock();
+
+    Monitor::stop();
+    monitor.join();
+    std::cout << "Time taken to decompress: " << Monitor::getLatency() << " nanoseconds \n";
 
     return 0;
 }

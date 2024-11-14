@@ -25,9 +25,12 @@ void PMC::compress(TimeSeries& timeseries, std::string mode, float bound, std::s
     IterIO outputFile(output, false);
     BinObj* obj = new BinObj;
     Univariate<float>* prev_data = nullptr;
-
+    
+    Monitor::clockReset();
     while (timeseries.hasNext()) {
         Univariate<float>* data = (Univariate<float>*) timeseries.next();
+        Monitor::startClock();
+
         if (time == -1) {
             time = data->get_time();
             obj->put(time);
@@ -55,6 +58,7 @@ void PMC::compress(TimeSeries& timeseries, std::string mode, float bound, std::s
         }
 
         prev_data = data;
+        Monitor::endClock();
     }
     PMC::_yield(obj, prev_data->get_time(), value);
 
@@ -70,10 +74,10 @@ void PMC::decompress(std::string input, std::string output, int interval) {
 
     int prev_point = 0;
     time_t time = r_obj->getLong();
+
     while (r_obj->getSize() != 0) {
         int end_point = r_obj->getInt();
         float value = r_obj->getFloat();
-        
         PMC::_approximate(outputFile, interval, time, prev_point, end_point, value);
         prev_point = end_point + interval;
     }
