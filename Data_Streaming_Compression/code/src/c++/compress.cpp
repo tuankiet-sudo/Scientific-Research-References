@@ -5,7 +5,11 @@
 
 using namespace std;
 
-bool Monitor::flag;
+int Monitor::counter;
+double Monitor::latency;
+bool Monitor::flag = false;
+high_resolution_clock::time_point Monitor::clock;
+
 
 TimeSeries loadTimeseries(string input) {
     TimeSeries timeseries;
@@ -27,62 +31,52 @@ TimeSeries loadTimeseries(string input) {
 
 
 int main(int argc, char** argv) {
-    if (argc < 5) { 
+    if (argc < 6) { 
         throw std::invalid_argument("Missing required parameters.");
     }
 
-    string input = "";
+    const string INPUT = argv[1];
+    const string OUTPUT = argv[2];
+    const string OUT_MONITOR = argv[3];
+    const string ALGO = argv[4];
+    const float ERROR = atof(argv[5]);
 
-    thread thread(&Monitor::start);
-    while (true) {
-        cout << "Enter: ";
-        cin >> input;
-        if (input == "stop") {
-            Monitor::stop();
-            break;
+    TimeSeries timeseries = loadTimeseries(INPUT);
+    std::thread monitor(&Monitor::monitor, OUT_MONITOR);
+    Monitor::start();
+
+    if (ALGO == "pmc") {
+        if (argc < 7) {
+            throw std::invalid_argument("PMC ALgo: Missing MODE parameter.");
         }
+        
+        PMC::compress(timeseries, argv[6], ERROR, OUTPUT);
+    }
+    else if (ALGO == "hybrid-pmc") {
+        if (argc < 8) {
+            throw std::invalid_argument("PMC ALgo: Missing W_SIZE or/and M_WINDOW parameters.");
+        }
+
+        HybridPMC::compress(timeseries, atoi(argv[6]), atoi(argv[7]), ERROR, OUTPUT);
+    }
+    else if (ALGO == "swing") {
+        SwingFilter::compress(timeseries, ERROR, OUTPUT);
+    }
+    else if (ALGO == "slide") {
+        SlideFilter::compress(timeseries, ERROR, OUTPUT);
+    }
+    else if (ALGO == "normal-equation") {
+        if (argc < 7) {
+            throw std::invalid_argument("Normal-Equation ALgo: Missing DEGREE parameter.");
+        }
+
+        NormalEquation::compress(timeseries, atoi(argv[6]), ERROR, OUTPUT);
     }
 
-    thread.join();
+    timeseries.finalize();
+    Monitor::stop();
+    monitor.join();
+    std::cout << "Time taken for each data points: " << Monitor::getLatency() << " nanoseconds \n";
 
-    // const string INPUT = argv[1];
-    // const string OUTPUT = argv[2];
-    // const string ALGO = argv[3];
-    // const float ERROR = atof(argv[4]);
-
-    // TimeSeries timeseries = loadTimeseries(INPUT);
-    // if (ALGO == "pmc") {
-    //     if (argc < 6) {
-    //         throw std::invalid_argument("PMC ALgo: Missing MODE parameter.");
-    //     }
-        
-    //     PMC::compress(timeseries, argv[5], ERROR, OUTPUT);
-    // }
-    // else if (ALGO == "hybrid-pmc") {
-    //     if (argc < 7) {
-    //         throw std::invalid_argument("PMC ALgo: Missing W_SIZE or/and M_WINDOW parameters.");
-    //     }
-
-    //     HybridPMC::compress(timeseries, atoi(argv[5]), atoi(argv[6]), ERROR, OUTPUT);
-    // }
-    // else if (ALGO == "swing") {
-    //     SwingFilter::compress(timeseries, ERROR, OUTPUT);
-    // }
-    // else if (ALGO == "slide") {
-    //     SlideFilter::compress(timeseries, ERROR, OUTPUT);
-    // }
-    // else if (ALGO == "normal-equation") {
-    //     if (argc < 6) {
-    //         throw std::invalid_argument("Normal-Equation ALgo: Missing DEGREE parameter.");
-    //     }
-
-    //     NormalEquation::compress(timeseries, atoi(argv[5]), ERROR, OUTPUT);
-    // }
-    // else {
-    //     ofstream("data/output/talatrau/abc.txt");
-    //     ofstream("data/output/abc.txt");
-    // }
-
-    // timeseries.finalize();
     return 0;
 }

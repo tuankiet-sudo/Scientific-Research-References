@@ -64,8 +64,12 @@ void HybridPMC::compress(TimeSeries& timeseries, int w_size, int m_window, float
 
     time_t time = -1;
     std::vector<float> buffer;
+    
+    Monitor::clockReset();
     while (timeseries.hasNext()) {
         Univariate<float>* data = (Univariate<float>*) timeseries.next();
+        Monitor::startClock();
+
         if (time == -1) {
             time = data->get_time();
             obj->put(time);
@@ -94,7 +98,8 @@ void HybridPMC::compress(TimeSeries& timeseries, int w_size, int m_window, float
                 }
             }
         }
-    
+
+        Monitor::endClock();
     }
 
     if (!buffer.empty()) {

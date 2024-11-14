@@ -4,21 +4,25 @@ if [[ $1 = "compress" ]]; then
     echo "Start compressing..."
     
     mkdir -p data/output/compress
-    INPUT=$(find data/input -name $2*)
-    OUTPUT=data/output/compress/$3_$(basename $INPUT .csv)
-    touch $OUTPUT
+    mkdir -p data/monitor/compress
 
-    bin/compress $INPUT $OUTPUT "${@:3}"
+    OUTPUT=data/output/compress/$3_$(basename $2 .csv)
+    MONITOR=data/monitor/compress/$3_$(basename $2 .csv).csv
+    touch $OUTPUT $MONITOR
+
+    bin/compress $2 $OUTPUT $MONITOR "${@:3}"
 
 elif [[ $1 = "decompress" ]]; then
     echo "Start decompressing..."
 
     mkdir -p data/output/decompress
-    INPUT=$(find data/output/compress -name $2*)
-    OUTPUT=data/output/decompress/$(basename $INPUT).csv
-    touch $OUTPUT
+    mkdir -p data/monitor/decompress
+
+    OUTPUT=data/output/decompress/$(basename $2).csv
+    MONITOR=data/monitor/decompress/$(basename $2).csv
+    touch $OUTPUT $MONITOR
     
-    bin/decompress $INPUT $OUTPUT "${@:3}"
+    bin/decompress $2 $OUTPUT $MONITOR "${@:3}"
 fi
 
 exit 0

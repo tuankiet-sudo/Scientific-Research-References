@@ -81,8 +81,11 @@ void NormalEquation::compress(TimeSeries& timeseries, int degree, float bound, s
     std::vector<Point2D> window;
     Polynomial* model = nullptr;
 
+    Monitor::clockReset();
     while (timeseries.hasNext()) {
         Univariate<float>* data = (Univariate<float>*) timeseries.next();
+        Monitor::startClock();
+
         if (time == -1) {
             time = data->get_time();
             obj->put(time);
@@ -108,10 +111,11 @@ void NormalEquation::compress(TimeSeries& timeseries, int degree, float bound, s
                 }
             }
         }
+
+        Monitor::endClock();
     }
     if (model != nullptr) {
         NormalEquation::_yield(obj, window.size(), model);
-        std::cout << model->str() << " " << window.size() - 1 << "\n";
         delete model;
     }
 
