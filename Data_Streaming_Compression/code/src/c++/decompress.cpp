@@ -12,15 +12,11 @@ high_resolution_clock::time_point Monitor::clock;
 
 
 int main(int argc, char** argv) {
-    if (argc < 6) { 
-        throw std::invalid_argument("Missing required parameters.");
-    }
-
     const string INPUT = argv[1];
     const string OUTPUT = argv[2];
     const string OUT_MONITOR = argv[3];
-    const string ALGO = argv[4];
-    const int INTERVAL = atoi(argv[5]);
+    const int INTERVAL = atoi(argv[4]);
+    const string ALGO = argv[5];
 
     std::thread monitor(&Monitor::monitor, OUT_MONITOR);
     Monitor::clockReset();

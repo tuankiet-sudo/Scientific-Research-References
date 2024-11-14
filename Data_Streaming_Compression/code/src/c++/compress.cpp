@@ -31,32 +31,20 @@ TimeSeries loadTimeseries(string input) {
 
 
 int main(int argc, char** argv) {
-    if (argc < 6) { 
-        throw std::invalid_argument("Missing required parameters.");
-    }
-
     const string INPUT = argv[1];
     const string OUTPUT = argv[2];
     const string OUT_MONITOR = argv[3];
-    const string ALGO = argv[4];
-    const float ERROR = atof(argv[5]);
+    const float ERROR = atof(argv[4]);
+    const string ALGO = argv[5];
 
     TimeSeries timeseries = loadTimeseries(INPUT);
     std::thread monitor(&Monitor::monitor, OUT_MONITOR);
     Monitor::start();
 
     if (ALGO == "pmc") {
-        if (argc < 7) {
-            throw std::invalid_argument("PMC ALgo: Missing MODE parameter.");
-        }
-        
         PMC::compress(timeseries, argv[6], ERROR, OUTPUT);
     }
     else if (ALGO == "hybrid-pmc") {
-        if (argc < 8) {
-            throw std::invalid_argument("PMC ALgo: Missing W_SIZE or/and M_WINDOW parameters.");
-        }
-
         HybridPMC::compress(timeseries, atoi(argv[6]), atoi(argv[7]), ERROR, OUTPUT);
     }
     else if (ALGO == "swing") {
@@ -66,10 +54,6 @@ int main(int argc, char** argv) {
         SlideFilter::compress(timeseries, ERROR, OUTPUT);
     }
     else if (ALGO == "normal-equation") {
-        if (argc < 7) {
-            throw std::invalid_argument("Normal-Equation ALgo: Missing DEGREE parameter.");
-        }
-
         NormalEquation::compress(timeseries, atoi(argv[6]), ERROR, OUTPUT);
     }
 

@@ -18,6 +18,14 @@ class Monitor {
             rusage usage;
             IterIO outputFile(output, false);
 
+            CSVObj header;
+            header.pushData("user_cpu_time");
+            header.pushData("system_cpu_time");
+            header.pushData("max_rss");
+            header.pushData("block_input");
+            header.pushData("block_output");
+            outputFile.writeStr(&header);
+
             while (Monitor::flag) {
                 CSVObj obj;
                 getrusage(RUSAGE_SELF, &usage);
@@ -30,6 +38,8 @@ class Monitor {
                 outputFile.writeStr(&obj);
                 // std::this_thread::sleep_for(milliseconds(10));
             }
+
+            outputFile.close();
         }
 
         static void start() {
