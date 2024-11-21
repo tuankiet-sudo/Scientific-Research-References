@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <stack>
+#include <unistd.h>
 #include <map>
 #include <algorithm>
 #include <cmath>

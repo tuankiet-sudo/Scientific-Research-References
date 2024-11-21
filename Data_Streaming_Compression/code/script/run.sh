@@ -21,26 +21,26 @@ ID=$(uuidgen | cut -c 1-8)
 
 # Compressing phase
 echo "-------------------------"
-echo "Compressing file: $ALGO-$FILE-$ID.bin"
-echo "Compressing profile: $ALGO-$FILE-$ID.csv"
-touch data/output/compress/$ALGO-$FILE-$ID.bin data/monitor/compress/$ALGO-$FILE-$ID.csv
+echo "Compressing file: $FILE-$ALGO-$ID.bin"
+echo "Compressing profile: $FILE-$ALGO-$ID.csv"
+touch data/output/compress/$FILE-$ALGO-$ID.bin data/monitor/compress/$FILE-$ALGO-$ID.csv
 
 echo "Start compressing..."
-bin/compress $1 "data/output/compress/$ALGO-$FILE-$ID.bin" "data/monitor/compress/$ALGO-$FILE-$ID.csv" $2 "${@:4}"
+bin/compress $1 "data/output/compress/$FILE-$ALGO-$ID.bin" "data/monitor/compress/$FILE-$ALGO-$ID.csv" $2 "${@:4}"
 
 
 # Decompressing phase
 echo -e "\n-------------------------"
-echo "Decompressing file: $ALGO-$FILE-$ID.csv"
-echo "Decompressing profile: $ALGO-$FILE-$ID.csv"
-touch data/output/decompress/$ALGO-$FILE-$ID.csv data/monitor/decompress/$ALGO-$FILE-$ID.csv
+echo "Decompressing file: $FILE-$ALGO-$ID.csv"
+echo "Decompressing profile: $FILE-$ALGO-$ID.csv"
+touch data/output/decompress/$FILE-$ALGO-$ID.csv data/monitor/decompress/$FILE-$ALGO-$ID.csv
 
 echo "Start decompressing..."
-bin/decompress "data/output/compress/$ALGO-$FILE-$ID.bin" "data/output/decompress/$ALGO-$FILE-$ID.csv" "data/monitor/decompress/$ALGO-$FILE-$ID.csv" $3 $4
+bin/decompress "data/output/compress/$FILE-$ALGO-$ID.bin" "data/output/decompress/$FILE-$ALGO-$ID.csv" "data/monitor/decompress/$FILE-$ALGO-$ID.csv" $3 $4
 
 # Statistic phase
 echo -e "\n-------------------------"
 echo "Start statisticizing..."
-python3 "src/python/statistics.py" $1 "data/output/decompress/$ALGO-$FILE-$ID.csv" "data/output/compress/$ALGO-$FILE-$ID.bin"
+python3 "src/python/statistics.py" $1 "data/output/decompress/$FILE-$ALGO-$ID.csv" "data/output/compress/$FILE-$ALGO-$ID.bin"
 
 exit 0
