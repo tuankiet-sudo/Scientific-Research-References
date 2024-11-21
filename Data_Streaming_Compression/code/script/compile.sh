@@ -5,7 +5,7 @@ echo "Start compiling..."
 WORK_DIR="$(pwd)"
 rm -rf "$WORK_DIR"/bin/*
 
-mkdir "$WORK_DIR/bin/obj/"
+mkdir -p "$WORK_DIR/bin/obj/"
 cd "$WORK_DIR/bin/obj/"
 for file in $(find "$WORK_DIR/src/c++/" -type f); do
     g++ -I "$WORK_DIR/include" -I "$WORK_DIR/lib" --std=c++11 -c "$file"
