@@ -16,27 +16,7 @@ void HybridPMC::_approximate(IterIO& file, int interval, time_t basetime, int pr
     }
 }
 
-void HybridPMC::_merge(BinObj* obj, std::vector<float>& buffer, bool flag, int w_size, int m_window) {
-    if (buffer.size() == w_size * m_window) {
-        float min = *std::min_element(buffer.begin(), buffer.end());
-        float max = *std::max_element(buffer.begin(), buffer.end());
-
-        HybridPMC::_yield(obj, buffer.size(), (max + min) / 2);
-        buffer.clear();
-    }
-    else {
-        if (flag) {
-            buffer.resize(buffer.size() - w_size);
-            float min = *std::min_element(buffer.begin(), buffer.end());
-            float max = *std::max_element(buffer.begin(), buffer.end());
-
-            HybridPMC::_yield(obj, buffer.size(), (max + min) / 2);
-            buffer.clear();
-        }
-    }
-}
-
-void HybridPMC::_split(BinObj* obj, std::vector<float>& window, float bound) {
+void HybridPMC::_pmc(BinObj* obj, std::vector<float>& window, float bound) {
     float min = INFINITY;
     float max = -INFINITY;
     float value = 0;
@@ -63,6 +43,8 @@ void HybridPMC::compress(TimeSeries& timeseries, int w_size, int m_window, float
     BinObj* obj = new BinObj;
 
     time_t time = -1;
+    float min = INFINITY;
+    float max = -INFINITY;
     std::vector<float> buffer;
     
     Monitor::clockReset();
@@ -76,24 +58,42 @@ void HybridPMC::compress(TimeSeries& timeseries, int w_size, int m_window, float
             obj->put(time);
         }
 
+        min = min < data->get_value() ? min : data->get_value();
+        max = max > data->get_value() ? max : data->get_value();
+
         buffer.push_back(data->get_value());
         if (buffer.size() % w_size == 0) {
-            float b_min = *std::min_element(buffer.begin(), buffer.end());
-            float b_max = *std::max_element(buffer.begin(), buffer.end());
-
-            if (b_max - b_min <= 2 * bound) {
-                HybridPMC::_merge(obj, buffer, false, w_size, m_window);
+            if (max - min <= 2 * bound) {
+                if (buffer.size() == w_size*m_window) {
+                    HybridPMC::_yield(obj, buffer.size(), (max + min) / 2);
+                    buffer.clear();
+                    min = INFINITY;
+                    max = INFINITY;
+                }
             }
             else {
                 std::vector<float> window(buffer.end() - w_size, buffer.end());
                 float w_min = *std::min_element(window.begin(), window.end());
                 float w_max = *std::max_element(window.begin(), window.end());
 
-                HybridPMC::_merge(obj, buffer, true, w_size, m_window);
+                if (buffer.size() > w_size) {
+                    buffer.resize(buffer.size() - w_size);
+                    float b_min = *std::min_element(buffer.begin(), buffer.end());
+                    float b_max = *std::max_element(buffer.begin(), buffer.end());
+                    HybridPMC::_yield(obj, buffer.size(), (b_max + b_min) / 2);
+                }
                 buffer.clear();
-
-                if (w_max - w_min <= 2 * bound) buffer = window;
-                else HybridPMC::_split(obj, window, bound);
+                
+                if (w_max - w_min <= 2 * bound) {
+                    buffer = window;
+                    min = w_min;
+                    max = w_max;
+                }
+                else {
+                    HybridPMC::_pmc(obj, window, bound);
+                    min = INFINITY;
+                    max = -INFINITY;
+                }
             }
         }
 
@@ -102,30 +102,17 @@ void HybridPMC::compress(TimeSeries& timeseries, int w_size, int m_window, float
     }
 
     if (!buffer.empty()) {
-        if (buffer.size() <= w_size) {
-            float b_min = *std::min_element(buffer.begin(), buffer.end());
-            float b_max = *std::max_element(buffer.begin(), buffer.end());
-
-            if (b_max - b_min > 2 * bound) HybridPMC::_split(obj, buffer, bound); 
-            else HybridPMC::_yield(obj, buffer.size(), (b_max + b_min) / 2);
+        if (max - min <= 2*bound) {
+            HybridPMC::_yield(obj, buffer.size(), (max + min) / 2);
         }
         else {
+            std::vector<float> window(buffer.begin() + buffer.size() / w_size * w_size, buffer.end());
+            buffer.resize(buffer.size() - window.size());
             float b_min = *std::min_element(buffer.begin(), buffer.end());
             float b_max = *std::max_element(buffer.begin(), buffer.end());
 
-            if (b_max - b_min <= 2 * bound) {
-                HybridPMC::_yield(obj, buffer.size(), (b_max + b_min) / 2);
-            }
-            else {
-                std::vector<float> window(buffer.begin() + buffer.size() / w_size * w_size, buffer.end());
-                buffer.resize(buffer.size() - window.size());
-
-                b_min = *std::min_element(buffer.begin(), buffer.end());
-                b_max = *std::max_element(buffer.begin(), buffer.end());
-
-                HybridPMC::_yield(obj, buffer.size(), (b_max + b_min) / 2);
-                HybridPMC::_split(obj, window, bound);
-            }
+            HybridPMC::_yield(obj, buffer.size(), (b_max + b_min) / 2);
+            HybridPMC::_pmc(obj, window, bound);
         }
     }
 
