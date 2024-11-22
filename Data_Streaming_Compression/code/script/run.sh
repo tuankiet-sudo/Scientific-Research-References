@@ -10,37 +10,36 @@ elif [[ $FLAG == 2 ]]; then
     exit 2
 fi
 
-mkdir -p data/output/compress
-mkdir -p data/output/decompress
-mkdir -p data/monitor/compress
-mkdir -p data/monitor/decompress
+mkdir -p out/compress
+mkdir -p out/decompress
 
 ALGO=$4
+DATA=$(echo $1 | rev | cut -d '/' -f 2 | rev)
 FILE=$(basename $1 .csv)
 ID=$(uuidgen | cut -c 1-8)
 
 # Compressing phase
 echo "-------------------------"
-echo "Compressing file: $FILE-$ALGO-$ID.bin"
-echo "Compressing profile: $FILE-$ALGO-$ID.csv"
-touch data/output/compress/$FILE-$ALGO-$ID.bin data/monitor/compress/$FILE-$ALGO-$ID.csv
+echo "Compressing file: $DATA"_"$FILE"_"$ALGO"_"$ID.bin"
+echo "Compressing profile: $DATA"_"$FILE"_"$ALGO"_"$ID.mon"
+touch out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.bin out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon
 
 echo "Start compressing..."
-bin/compress $1 "data/output/compress/$FILE-$ALGO-$ID.bin" "data/monitor/compress/$FILE-$ALGO-$ID.csv" $2 "${@:4}"
+bin/compress $1 out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.bin out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon $2 "${@:4}"
 
 
 # Decompressing phase
 echo -e "\n-------------------------"
-echo "Decompressing file: $FILE-$ALGO-$ID.csv"
-echo "Decompressing profile: $FILE-$ALGO-$ID.csv"
-touch data/output/decompress/$FILE-$ALGO-$ID.csv data/monitor/decompress/$FILE-$ALGO-$ID.csv
+echo "Decompressing file: $DATA"_"$FILE"_"$ALGO"_"$ID.csv"
+echo "Decompressing profile: $DATA"_"$FILE"_"$ALGO"_"$ID.mon"
+touch out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.csv out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon
 
 echo "Start decompressing..."
-bin/decompress "data/output/compress/$FILE-$ALGO-$ID.bin" "data/output/decompress/$FILE-$ALGO-$ID.csv" "data/monitor/decompress/$FILE-$ALGO-$ID.csv" $3 $4
+bin/decompress out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.bin out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.csv out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon $3 $4
 
 # Statistic phase
 echo -e "\n-------------------------"
 echo "Start statisticizing..."
-python3 "src/python/statistics.py" $1 "data/output/decompress/$FILE-$ALGO-$ID.csv" "data/output/compress/$FILE-$ALGO-$ID.bin"
+python3 src/python/statistics.py $1 out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.csv out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.bin
 
 exit 0
