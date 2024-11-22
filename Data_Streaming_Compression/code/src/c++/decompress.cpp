@@ -6,6 +6,7 @@
 using namespace std;
 
 int Monitor::counter;
+long Monitor::page_size;
 double Monitor::latency;
 bool Monitor::flag = false;
 high_resolution_clock::time_point Monitor::clock;
