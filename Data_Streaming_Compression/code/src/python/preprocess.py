@@ -1,6 +1,7 @@
 import os
 import csv
 import sys
+import shutil
 
 def load_tsv(name):
     data = {}
@@ -12,6 +13,18 @@ def load_tsv(name):
             data[row[0]] = data[row[0]] + row[1:]
         else:
             data[row[0]] = row[1:]
+    
+    file.close()
+    return data
+
+
+def load_csv(name):
+    data = []
+    file = open(name)
+    
+    reader = csv.reader(file, delimiter=',')
+    for row in reader:
+        data.append(row[1])
     
     file.close()
     return data
@@ -42,3 +55,11 @@ for key in keys:
 os.remove(dirName + dataName + "_TRAIN.tsv")
 os.remove(dirName + dataName + "_TEST.tsv")
 os.remove(dirName + "README.md")
+
+# data = []
+# for name in os.listdir(dirName):
+#     file = dirName + "/" + name
+#     data += load_csv(file)
+
+# write(data, "{}/{}.csv".format("/".join(e for e in dirName.split('/')[:-2]), dataName))
+# shutil.rmtree(dirName)
