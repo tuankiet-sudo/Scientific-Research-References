@@ -5,11 +5,8 @@
 
 using namespace std;
 
-int Monitor::counter;
 long Monitor::page_size;
-double Monitor::latency;
 bool Monitor::flag = false;
-high_resolution_clock::time_point Monitor::clock;
 
 
 TimeSeries loadTimeseries(string input) {
@@ -54,14 +51,16 @@ int main(int argc, char** argv) {
     else if (ALGO == "slide") {
         SlideFilter::compress(timeseries, ERROR, OUTPUT);
     }
+    else if (ALGO == "optimal-pla") {
+        OptimalPLA::compress(timeseries, ERROR, OUTPUT);
+    }
     else if (ALGO == "normal-equation") {
-        NormalEquation::compress(timeseries, atoi(argv[6]), ERROR, OUTPUT);
+        NormalEquation::compress(timeseries, argv[6], atoi(argv[7]), ERROR, OUTPUT);
     }
 
     timeseries.finalize();
     Monitor::stop();
     monitor.join();
-    std::cout << "Time taken for each data points: " << Monitor::getLatency() << " nanoseconds \n";
 
     return 0;
 }

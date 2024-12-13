@@ -1,7 +1,8 @@
-#ifndef FUNCTION
-#define FUNCTION
+#ifndef ALGEBRAIC_FUNCTION_H
+#define ALGEBRAIC_FUNCTION_H
 
-#include "dependencies.h"
+#include <string>
+#include <iostream>
 
 struct Point2D {
     float x;
@@ -29,8 +30,16 @@ class Line {
             return this->slope * x + this->intercept;
         }
 
+        float get_slope() {
+            return this->slope;
+        }
+
+        float get_intercept() {
+            return this->intercept;
+        }
+
         static Line* line(Point2D* p1, Point2D* p2) {
-            float slope = (p1->y - p2->y) / (p1->x-p2->x);
+            float slope = (p1->y - p2->y) / (float) (p1->x-p2->x);
             float intercept = p1->y - slope*p1->x;
 
             return new Line(slope, intercept);

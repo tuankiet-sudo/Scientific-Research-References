@@ -1,7 +1,10 @@
-#ifndef GEOMETRY
-#define GEOMETRY
+#ifndef SYSTEM_IO_H
+#define SYSTEM_IO_H
 
-#include "dependencies.h"
+#include <string>
+#include <fstream>
+#include <vector>
+#include <sstream>
 
 using Byte = unsigned char;
 const char HEX[16] = {'0', '1', '2', '3', '4', '5', '6', '7',

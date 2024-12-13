@@ -1,7 +1,7 @@
+#include "system/io.h"
+#include "system/monitor.h"
 #include "dependencies.h"
-#include "matrix.h"
-#include "monitor.h"
-#include "function.h"
+#include "algebraic/function.h"
 #include "timeseries.h"
 
 

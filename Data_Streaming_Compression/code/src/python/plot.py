@@ -15,7 +15,7 @@ def load(file):
             time.append(int(line[0]))
             data.append(float(line[1]))
         
-    return np.array(time), np.array(data)        
+    return np.array(time[:200]), np.array(data[:200])        
 
 
 def plot(size, title, type, objs):

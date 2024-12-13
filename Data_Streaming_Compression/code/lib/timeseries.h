@@ -1,7 +1,7 @@
-#ifndef TIMESERIES
-#define TIMESERIES
+#ifndef TIMESERIES_H
+#define TIMESERIES_H
 
-#include "dependencies.h"
+#include <vector>
 
 // Source for manipulating time series data
 class Data {};

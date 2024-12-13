@@ -5,11 +5,8 @@
 
 using namespace std;
 
-int Monitor::counter;
 long Monitor::page_size;
-double Monitor::latency;
 bool Monitor::flag = false;
-high_resolution_clock::time_point Monitor::clock;
 
 
 int main(int argc, char** argv) {
@@ -20,10 +17,8 @@ int main(int argc, char** argv) {
     const string ALGO = argv[5];
 
     std::thread monitor(&Monitor::monitor, OUT_MONITOR);
-    Monitor::clockReset();
-    Monitor::start();
+    Monitor::start();   
 
-    Monitor::startClock();
     if (ALGO == "pmc") {
         PMC::decompress(INPUT, OUTPUT, INTERVAL);
     }
@@ -36,14 +31,15 @@ int main(int argc, char** argv) {
     else if (ALGO == "slide") {
         SlideFilter::decompress(INPUT, OUTPUT, INTERVAL);
     }
+    else if (ALGO == "optimal-pla") {
+        OptimalPLA::decompress(INPUT, OUTPUT, INTERVAL);
+    }
     else if (ALGO == "normal-equation") {
         NormalEquation::decompress(INPUT, OUTPUT, INTERVAL);
     }
-    Monitor::endClock();
 
     Monitor::stop();
     monitor.join();
-    std::cout << "Time taken to decompress: " << Monitor::getLatency() << " nanoseconds \n";
 
     return 0;
 }

@@ -8,6 +8,9 @@ if [[ $FLAG == 1 ]]; then
 elif [[ $FLAG == 2 ]]; then
     echo "Missing required parameter for $4 algorithm."
     exit 2
+elif [[ $FLAG == 3 ]]; then
+    echo "Invalid parameter for $4 algorithm."
+    exit 3
 fi
 
 mkdir -p out/compress
@@ -28,7 +31,7 @@ echo "Start compressing..."
 bin/compress $1 out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.bin out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon $2 "${@:4}"
 
 
-# Decompressing phase
+# # Decompressing phase
 echo -e "\n-------------------------"
 echo "Decompressing file: $DATA"_"$FILE"_"$ALGO"_"$ID.csv"
 echo "Decompressing profile: $DATA"_"$FILE"_"$ALGO"_"$ID.mon"
@@ -40,6 +43,6 @@ bin/decompress out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.bin out/decompress/$DATA
 # Statistic phase
 echo -e "\n-------------------------"
 echo "Start statisticizing..."
-python3 src/python/statistics.py $1 out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.csv out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.bin
+python3 src/python/statistics.py $1 out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.csv out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.bin
 
 exit 0

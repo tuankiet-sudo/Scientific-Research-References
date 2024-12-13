@@ -1,7 +1,8 @@
-#ifndef MATRIX
-#define MATRIX
+#ifndef ALGEBRAIC_MATRIX_H
+#define ALGEBRAIC_MATRIX_H
 
-#include "dependencies.h"
+#include <string>
+#include <iostream>
 
 // Source for manipulating matrix
 template <class T>
@@ -36,6 +37,26 @@ class Matrix {
 
     int get_width() const {
         return this->width;
+    }
+
+    void dump() const {
+        for (int i=0; i<this->height; i++) {
+            for (int j=0; j<this->width; j++) {
+                std::cout << this->cell[i][j] << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << "-----------------\n";
+    }
+
+    void nan() const {
+        for (int i=0; i<this->height; i++) {
+            for (int j=0; j<this->width; j++) {
+                if (std::isnan(this->cell[i][j])) {
+                    std::cout <<  "nan found at " << i << "x" << j << std::endl;
+                }
+            }
+        }
     }
 
     T* toVec() const {
@@ -79,7 +100,7 @@ class Matrix {
             exit(-1);
         }
 
-        Matrix<float>* matrix = new Matrix<float>(this->height, this->width*2);
+        Matrix<double>* matrix = new Matrix<double>(this->height, this->width*2);
         for (int i=0; i<this->height; i++) {
             for (int j=0; j<this->width; j++) {
                 if (i==j) matrix->cell[i][j+this->width] = 1;
@@ -92,7 +113,7 @@ class Matrix {
         // Swap rows
         for (int i=this->height-1; i>0; i--) {
             if(matrix->cell[i-1][0] < matrix->cell[i][0]) {
-                float* temp = matrix->cell[i];
+                double* temp = matrix->cell[i];
                 matrix->cell[i] = matrix->cell[i-1];
                 matrix->cell[i-1] = temp;
             }
