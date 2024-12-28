@@ -42,8 +42,8 @@ int main(int argc, char** argv) {
     if (ALGO == "pmc") {
         PMC::compress(timeseries, argv[6], ERROR, OUTPUT);
     }
-    else if (ALGO == "hybrid-pmc") {
-        HybridPMC::compress(timeseries, atoi(argv[6]), atoi(argv[7]), ERROR, OUTPUT);
+    else if (ALGO == "hybrid-pca") {
+        HybridPCA::compress(timeseries, atoi(argv[6]), atoi(argv[7]), ERROR, OUTPUT);
     }
     else if (ALGO == "swing") {
         SwingFilter::compress(timeseries, ERROR, OUTPUT);

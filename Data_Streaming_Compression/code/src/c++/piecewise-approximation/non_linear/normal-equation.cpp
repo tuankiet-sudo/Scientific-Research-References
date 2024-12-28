@@ -2,16 +2,6 @@
 
 namespace NormalEquation {
 
-    Clock clock;
-    std::map<int, Matrix<float>*> cache;
-
-    void _yield(BinObj* obj, int length, Polynomial* model) {
-        obj->put(length);
-        for (int i = 0; i <= model->degree; i++) {
-            obj->put(model->coefficients[i]);
-        }
-    }
-
     struct Model {
         Polynomial* function;
         float error;
@@ -27,7 +17,18 @@ namespace NormalEquation {
         }
     };
 
-    Polynomial* _calPolynomial(std::vector<Point2D>& window, int degree) {
+    Clock clock;
+    std::map<int, Matrix<float>*> cache;
+
+    void __yield(BinObj* obj, time_t basetime, int length, Polynomial* model) {
+        obj->put(basetime);
+        obj->put(length);
+        for (int i = 0; i <= model->degree; i++) {
+            obj->put(model->coefficients[i]);
+        }
+    }
+
+    Polynomial* __calPolynomial(std::vector<Point2D>& window, int degree) {
             Matrix<float>* theta = nullptr;
             if (cache.find(window.size()) == cache.end()) {
                 Matrix<float> *X = new Matrix<float>(window.size(), degree+1);
@@ -66,7 +67,7 @@ namespace NormalEquation {
             return model;
     }
 
-    bool _approxSuccess(std::vector<Point2D>& window, Model* model, std::string mode, float bound) {
+    bool __approxSuccess(std::vector<Point2D>& window, Model* model, std::string mode, float bound) {
         if (mode == "individual") {
             if (model->error == -1) {
                 model->error = -INFINITY;
@@ -82,7 +83,7 @@ namespace NormalEquation {
             
             return model->error < bound;
         }
-        else if (mode == "residual") {
+        else if (mode == "accumulate") {
             if (model->error == -1) {
                 model->error = 0;
                 for (int i = 0; i < window.size(); i++) {
@@ -99,23 +100,21 @@ namespace NormalEquation {
         return false;
     }
 
-    void _approximate(IterIO& file, int interval, time_t basetime, int prev_point, int length, Polynomial* model) {
+    void __decompress_segment(IterIO& file, int interval, time_t basetime, int length, Polynomial* model) {
         for (int i = 0; i < length; i++) {
             CSVObj obj;
-            obj.pushData(std::to_string(basetime + prev_point));
+            obj.pushData(std::to_string(basetime + i * interval));
             obj.pushData(std::to_string(model->substitute<int>(i)));
-
             file.writeStr(&obj);
-            prev_point += interval;
         }
     }
 
     void compress(TimeSeries& timeseries, std::string mode, int degree, float bound, std::string output) {
         IterIO outputFile(output, false);
-        BinObj* obj = new BinObj;
-        obj->put(degree);
+        BinObj* compress_data = new BinObj;
+        compress_data->put(degree);
 
-        time_t time = -1;
+        time_t basetime = -1;
         std::vector<Point2D> window;
         Model* model = nullptr;
         Model* n_model = nullptr;
@@ -124,24 +123,24 @@ namespace NormalEquation {
             Univariate<float>* data = (Univariate<float>*) timeseries.next();
             clock.start();
 
-            if (time == -1) {
-                time = data->get_time();
-                obj->put(time);
+            if (basetime == -1) {
+                basetime = data->get_time();
             }
 
-            window.push_back(Point2D(data->get_time() - time, data->get_value()));
+            window.push_back(Point2D(window.size(), data->get_value()));
             if (window.size() == degree + 1) {
-                model = new Model(_calPolynomial(window, degree));
+                model = new Model(__calPolynomial(window, degree));
             }
             if (window.size() > degree + 1) {
-                if (!_approxSuccess(window, model, mode, bound)) {
-                    n_model = new Model(_calPolynomial(window, degree));
-                    if (!_approxSuccess(window, n_model, mode, bound)) {
-                        _yield(obj, window.size()-1, model->function);
+                if (!__approxSuccess(window, model, mode, bound)) {
+                    n_model = new Model(__calPolynomial(window, degree));
+                    if (!__approxSuccess(window, n_model, mode, bound)) {
+                        __yield(compress_data, basetime, window.size()-1, model->function);
+                        basetime = data->get_time();
+                        window = {Point2D(0, data->get_value())};
+
                         delete model;
                         delete n_model;
-                        model = nullptr;
-                        window = {Point2D(data->get_time() - time, data->get_value())};
                     }
                     else {
                         delete model;
@@ -152,15 +151,11 @@ namespace NormalEquation {
 
             clock.stop();
         }
-        if (model != nullptr) {
-            _yield(obj, window.size(), model->function);
-            delete model;
-        }
 
         for (auto& entry : cache) delete entry.second;
-        outputFile.writeBin(obj);
+        outputFile.writeBin(compress_data);
         outputFile.close();
-        delete obj;
+        delete compress_data;
 
         std::cout << std::fixed << "Time taken for each data points: " 
         << clock.getAvgDuration() << " nanoseconds \n";
@@ -170,30 +165,29 @@ namespace NormalEquation {
     void decompress(std::string input, std::string output, int interval) {
         IterIO inputFile(input, true, true);
         IterIO outputFile(output, false);
-        BinObj* r_obj = inputFile.readBin();
+        BinObj* compress_data = inputFile.readBin();
 
-        int prev_point = 0;
-        int degree = r_obj->getInt();
-        time_t time = r_obj->getLong();
-
-        while (r_obj->getSize() != 0) {
+        int degree = compress_data->getInt();
+        while (compress_data->getSize() != 0) {
             clock.start();
-            int length = r_obj->getInt();
+
+            time_t basetime = compress_data->getLong();
+            int length = compress_data->getInt();
             float* coefficients = new float[degree+1];
 
             for (int i = 0; i <= degree; i++) {
-                coefficients[i] = r_obj->getFloat();
+                coefficients[i] = compress_data->getFloat();
             }
             Polynomial* model = new Polynomial(degree, coefficients);
-            _approximate(outputFile, interval, time, prev_point, length, model);
-            prev_point += length * interval;
+            __decompress_segment(outputFile, interval, basetime, length, model);
             
             delete model;
             delete[] coefficients;
+
             clock.stop();
         }
 
-        delete r_obj;
+        delete compress_data;
         inputFile.close();
         outputFile.close();
 

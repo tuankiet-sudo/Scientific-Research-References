@@ -15,6 +15,7 @@ int main(int argc, char** argv) {
     const string OUT_MONITOR = argv[3];
     const int INTERVAL = atoi(argv[4]);
     const string ALGO = argv[5];
+    const float BOUND = atof(argv[6]);
 
     std::thread monitor(&Monitor::monitor, OUT_MONITOR);
     Monitor::start();   
@@ -22,8 +23,8 @@ int main(int argc, char** argv) {
     if (ALGO == "pmc") {
         PMC::decompress(INPUT, OUTPUT, INTERVAL);
     }
-    else if (ALGO == "hybrid-pmc") {
-        HybridPMC::decompress(INPUT, OUTPUT, INTERVAL);
+    else if (ALGO == "hybrid-pca") {
+        HybridPCA::decompress(INPUT, OUTPUT, INTERVAL);
     }
     else if (ALGO == "swing") {
         SwingFilter::decompress(INPUT, OUTPUT, INTERVAL);
@@ -32,7 +33,7 @@ int main(int argc, char** argv) {
         SlideFilter::decompress(INPUT, OUTPUT, INTERVAL);
     }
     else if (ALGO == "optimal-pla") {
-        OptimalPLA::decompress(INPUT, OUTPUT, INTERVAL);
+        OptimalPLA::decompress(INPUT, OUTPUT, INTERVAL, BOUND);
     }
     else if (ALGO == "normal-equation") {
         NormalEquation::decompress(INPUT, OUTPUT, INTERVAL);

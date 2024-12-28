@@ -13,7 +13,7 @@ namespace PMC {
 };
 
 
-namespace HybridPMC {
+namespace HybridPCA {
     // Source paper: Improved Piecewise Constant Approximation Method for Compressing Data Streams
     // Source path: src/piecewise-approximation/constant/hybrid-pmc
     void compress(TimeSeries& timeseries, int w_size, int m_window, float bound, std::string output);

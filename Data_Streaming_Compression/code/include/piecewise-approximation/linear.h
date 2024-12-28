@@ -28,5 +28,5 @@ class SlideFilter {
 
 namespace OptimalPLA {
     void compress(TimeSeries& timeseries, float bound, std::string output);
-    void decompress(std::string input, std::string output, int interval);
+    void decompress(std::string input, std::string output, int interval, float bound);
 };

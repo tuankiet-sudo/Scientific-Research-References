@@ -10,11 +10,13 @@ namespace OptimalPLA {
         obj->put(line->get_intercept());
     }
 
-    void _approximate(IterIO& file, int interval, time_t basetime, int length, float slope, float intercept) {
+    void _approximate(IterIO& file, int interval, time_t basetime, int length, float slope, float intercept, float u_slope, float u_intercept, float l_slope, float l_intercept) {
         for (int i=0; i<length; i++) {
             CSVObj obj;
             obj.pushData(std::to_string(basetime + interval*i));
-            obj.pushData(std::to_string((basetime + interval*i-1)*slope + intercept));
+            obj.pushData(std::to_string((basetime + interval*i)*slope + intercept));
+            obj.pushData(std::to_string((basetime + interval*i)*u_slope + u_intercept));
+            obj.pushData(std::to_string((basetime + interval*i)*l_slope + l_intercept));
 
             file.writeStr(&obj);
         }
@@ -62,14 +64,18 @@ namespace OptimalPLA {
                 l_cvx.append(u_p1); l_cvx.append(u_p2);
             }
             else {
-                if (l_line->substitute(p.x) > p.y || p.y > u_line->substitute(p.x)) {
+                if (l_line->substitute(p.x) > p.y + bound || p.y - bound > u_line->substitute(p.x)) {
                     Line* l1 = Line::line(u_line->get_slope(), l_cvx.at(l_cvx.size()-1));
                     Line* l2 = Line::line(l_line->get_slope(), u_cvx.at(u_cvx.size()-1));
+                    
                     Point2D* p0 = Line::intersection(l1, l2);
-                    _yield(obj, length, Line::line((u_line->get_slope()+l_line->get_slope())/2, p0));
+                    Line* l = Line::line((u_line->get_slope()+l_line->get_slope())/2, p0);
+                    _yield(obj, length, l);
+                    _yield(obj, length, l_line);
+                    _yield(obj, length, u_line);
                     
                     delete p0; delete p1; delete p2;
-                    delete l1; delete l2;
+                    delete l1; delete l2; delete l;
                     delete l_line; delete u_line;
                     u_cvx.clear();
                     l_cvx.clear();
@@ -137,10 +143,19 @@ namespace OptimalPLA {
         << clock.getAvgDuration() << " nanoseconds \n";
     }
 
-    void decompress(std::string input, std::string output, int interval) {
+    void decompress(std::string input, std::string output, int interval, float bound) {
         IterIO inputFile(input, true, true);
         IterIO outputFile(output, false);
         BinObj* r_obj = inputFile.readBin();
+
+        // float prev = 0;
+        // float now = 0;
+
+        // int count = 0;
+        // int seg = 0;
+
+        // float prev_slope = -100;
+        // int direct = -1;    // 0 is -a 1 is a
 
         time_t time = r_obj->getLong();
         while (r_obj->getSize() != 0) {
@@ -148,7 +163,35 @@ namespace OptimalPLA {
             int length = r_obj->getInt();
             float slope = r_obj->getFloat();
             float intercept = r_obj->getFloat();
-            _approximate(outputFile, interval, time, length, slope, intercept);
+            int u_length = r_obj->getInt();
+            float u_slope = r_obj->getFloat();
+            float u_intercept = r_obj->getFloat();
+            int l_length = r_obj->getInt();
+            float l_slope = r_obj->getFloat();
+            float l_intercept = r_obj->getFloat();
+            
+            _approximate(outputFile, interval, time, length, slope, intercept, u_slope, u_intercept, l_slope, l_intercept);
+            
+            std::cout << length << " " << slope << "x " << intercept << "\n";
+            // now = (time-1)*slope + intercept;
+            // if (direct == -1 && prev_slope != -100) {
+            //     if (slope > prev_slope) direct = 1;
+            //     else if (slope < prev_slope) direct = 0;
+            // }
+
+            // if (std::abs(now-prev) < 2*bound) {
+            //     if (direct == 0 && slope < prev_slope) count++;
+            //     else if (direct == 1 && slope > prev_slope) count++; 
+            //     else direct = -1;
+            // } 
+            // else {
+            //     direct = -1;
+            // }
+            
+            // prev = (time+interval*length-1)*slope + intercept;
+            // prev_slope = slope;
+            // seg++;
+
             time += length * interval;
             clock.stop();
         }

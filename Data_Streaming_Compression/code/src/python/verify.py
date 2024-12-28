@@ -20,7 +20,7 @@ if __name__ == "__main__":
             else:
                 print(0)
             
-    elif ALGO == "hybrid-pmc":
+    elif ALGO == "hybrid-pca":
         if len(sys.argv) < 4:
             print(Error.MISSING_PARAM.value)
         else:
@@ -34,7 +34,7 @@ if __name__ == "__main__":
             print(Error.MISSING_PARAM.value)
         else:
             MODE = sys.argv[2]
-            if MODE != "individual" and MODE != "residual":
+            if MODE != "individual" and MODE != "accumulate":
                 print(Error.INVALID_PARAM.value)
             elif not sys.argv[3].isdigit():
                 print(Error.INVALID_PARAM.value)
