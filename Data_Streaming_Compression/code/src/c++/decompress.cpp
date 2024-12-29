@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
         SlideFilter::decompress(INPUT, OUTPUT, INTERVAL);
     }
     else if (ALGO == "optimal-pla") {
-        OptimalPLA::decompress(INPUT, OUTPUT, INTERVAL, BOUND);
+        OptimalPLA::decompress(INPUT, OUTPUT, INTERVAL);
     }
     else if (ALGO == "normal-equation") {
         NormalEquation::decompress(INPUT, OUTPUT, INTERVAL);

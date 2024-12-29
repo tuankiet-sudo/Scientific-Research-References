@@ -151,6 +151,10 @@ class BinObj : public IOObj {
             return data;
         }
 
+        void concat(BinObj* obj) {
+            this->byte_vector.insert(this->byte_vector.end(), obj->byte_vector.begin(), obj->byte_vector.end());
+        }
+
         int getSize() {
             return this->byte_vector.size();
         }

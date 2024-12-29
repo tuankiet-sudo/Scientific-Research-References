@@ -6,27 +6,30 @@
 #include "timeseries.h"
 
 
-class SwingFilter {
+namespace SwingFilter {
     // Source paper: Online Piece-wise Linear Approximation of Numerical Streams with Precision Guarantees
     // Source path: src/piecewise-approximation/linear/swing-filter.cpp
-    private:
-
-    public:
-        static void compress(TimeSeries& timeseries, float bound, std::string output);
-        static void decompress(std::string input, std::string output, int interval);
+    void compress(TimeSeries& timeseries, float bound, std::string output);
+    void decompress(std::string input, std::string output, int interval);
 };
 
-class SlideFilter {
+namespace SlideFilter {
     // Source paper: Online Piece-wise Linear Approximation of Numerical Streams with Precision Guarantees
     // Source path: src/piecewise-approximation/linear/slide-filter.cpp
-    private:
-
-    public:
-        static void compress(TimeSeries& timeseries, float bound, std::string output);
-        static void decompress(std::string input, std::string output, int interval);
+    void compress(TimeSeries& timeseries, float bound, std::string output);
+    void decompress(std::string input, std::string output, int interval);
 };
 
 namespace OptimalPLA {
+    // Source paper: Maximum error-bounded Piecewise Linear Representation for online stream approximation
+    // Source path: src/piecewise-approximation/linear/optimal-pla.cpp
     void compress(TimeSeries& timeseries, float bound, std::string output);
-    void decompress(std::string input, std::string output, int interval, float bound);
+    void decompress(std::string input, std::string output, int interval);
+};
+
+namespace MixPiece {
+    // Source paper: Flexible grouping of linear segments for highly accurate lossy compression of time series data
+    // Source path: src/piecewise-approximation/linear/mix-piece.cpp
+    void compress(TimeSeries& timeseries, int n_segment, float bound, std::string output);
+    void decompress(std::string input, std::string output, int interval);
 };

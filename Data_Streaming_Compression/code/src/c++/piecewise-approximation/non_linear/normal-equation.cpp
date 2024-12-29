@@ -72,12 +72,12 @@ namespace NormalEquation {
             if (model->error == -1) {
                 model->error = -INFINITY;
                 for (int i = 0; i < window.size(); i++) {
-                    float error = std::abs(model->function->substitute<int>(i) - window[i].y);
+                    float error = std::abs(model->function->subs<int>(i) - window[i].y);
                     model->error = model->error < error ? error : model->error;
                 }
             }
             else {
-                float error = std::abs(model->function->substitute<int>(window.size()-1) - window[window.size()-1].y);
+                float error = std::abs(model->function->subs<int>(window.size()-1) - window[window.size()-1].y);
                 model->error = model->error < error ? error : model->error;
             }
             
@@ -87,11 +87,11 @@ namespace NormalEquation {
             if (model->error == -1) {
                 model->error = 0;
                 for (int i = 0; i < window.size(); i++) {
-                    model->error += std::abs(model->function->substitute<int>(i) - window[i].y);
+                    model->error += std::abs(model->function->subs<int>(i) - window[i].y);
                 }
             }
             else {
-                model->error += std::abs(model->function->substitute<int>(window.size()-1) - window[window.size()-1].y);
+                model->error += std::abs(model->function->subs<int>(window.size()-1) - window[window.size()-1].y);
             }
             
             return model->error < bound * window.size();
@@ -104,7 +104,7 @@ namespace NormalEquation {
         for (int i = 0; i < length; i++) {
             CSVObj obj;
             obj.pushData(std::to_string(basetime + i * interval));
-            obj.pushData(std::to_string(model->substitute<int>(i)));
+            obj.pushData(std::to_string(model->subs<int>(i)));
             file.writeStr(&obj);
         }
     }

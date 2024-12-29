@@ -98,7 +98,7 @@ namespace HybridPCA {
         __yield(obj, basetime, length, value);
     }
 
-    void compress(TimeSeries& timeseries, int w_size, int m_window, float bound, std::string output) {
+    void compress(TimeSeries& timeseries, int w_size, int n_window, float bound, std::string output) {
         IterIO outputFile(output, false);
         BinObj* compress_data = new BinObj;
         
@@ -110,7 +110,7 @@ namespace HybridPCA {
             buffer.append(data);
             if (buffer.get_size() % w_size == 0) {
                 if (buffer.max - buffer.min <= 2 * bound) {
-                    if (buffer.get_size() == w_size*m_window) {
+                    if (buffer.get_size() == w_size*n_window) {
                         __yield(compress_data, buffer.get_basetime(), buffer.get_size(), (buffer.max + buffer.min) / 2);
                         buffer.clear();
                     }

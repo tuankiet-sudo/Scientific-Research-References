@@ -26,7 +26,7 @@ class Line {
             this->intercept = intercept;
         }
 
-        float substitute(float x) {
+        float subs(float x) {
             return this->slope * x + this->intercept;
         }
 
@@ -38,17 +38,15 @@ class Line {
             return this->intercept;
         }
 
-        static Line* line(Point2D* p1, Point2D* p2) {
-            float slope = (p1->y - p2->y) / (float) (p1->x-p2->x);
-            float intercept = p1->y - slope*p1->x;
+        static Line* line(Point2D p1, Point2D p2) {
+            float slope = (p1.y - p2.y) / (float) (p1.x-p2.x);
+            float intercept = p1.y - slope*p1.x;
 
             return new Line(slope, intercept);
         }
 
-        static Line* line(float slope, Point2D* p) {
-            float intercept = p->y - slope*p->x;
-
-            return new Line(slope, intercept);
+        static Line* line(float slope, Point2D p) {
+            return new Line(slope, p.y - slope*p.x);
         }
 
         static Point2D* intersection(Line* l1, Line* l2) {
@@ -86,7 +84,7 @@ class Polynomial {
     }
 
     template <typename T>
-    float substitute(const T vars) const {
+    float subs(const T vars) const {
         float result = this->coefficients[0];
         for (int i=1; i<this->degree+1; i++) {
             result += this->coefficients[i]*pow(vars, i);

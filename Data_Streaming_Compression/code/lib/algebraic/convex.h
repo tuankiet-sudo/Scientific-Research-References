@@ -4,12 +4,12 @@
 #include <vector>
 #include "algebraic/function.h"
 
-class UpperConvexHull {
+class UpperHull {
     private:
         std::vector<Point2D> points;
 
     public:
-        void append(const Point2D& point) {
+        void append(Point2D point) {
             this->points.push_back(point);
 
             while (this->points.size() > 2) {
@@ -18,8 +18,8 @@ class UpperConvexHull {
                 Point2D p2 = this->points.at(size-2);
                 Point2D p3 = this->points.at(size-3);
 
-                Line* line = Line::line(&p1, &p3);
-                if (line->substitute(p2.x) >= p2.y) {
+                Line* line = Line::line(p1, p3);
+                if (line->subs(p2.x) >= p2.y) {
                     this->points.erase(this->points.begin()+size-2);
                     delete line;
                 }
@@ -31,8 +31,8 @@ class UpperConvexHull {
         
         }
 
-        Point2D* at(int i) {
-            return &this->points.at(i);
+        Point2D at(int i) {
+            return this->points.at(i);
         }
 
         int size() {
@@ -48,12 +48,12 @@ class UpperConvexHull {
         }
 };
 
-class LowerConvexHull {
+class LowerHull {
     private:
         std::vector<Point2D> points;
 
     public:
-        void append(const Point2D& point) {
+        void append(Point2D point) {
             this->points.push_back(point);
 
             while (this->points.size() > 2) {
@@ -62,8 +62,8 @@ class LowerConvexHull {
                 Point2D p2 = this->points.at(size-2);
                 Point2D p3 = this->points.at(size-3);
 
-                Line* line = Line::line(&p1, &p3);
-                if (line->substitute(p2.x) <= p2.y) {
+                Line* line = Line::line(p1, p3);
+                if (line->subs(p2.x) <= p2.y) {
                     this->points.erase(this->points.begin()+size-2);
                     delete line;
                 }
@@ -75,8 +75,8 @@ class LowerConvexHull {
         
         }
 
-        Point2D* at(int i) {
-            return &this->points.at(i);
+        Point2D at(int i) {
+            return this->points.at(i);
         }
 
         int size() {
