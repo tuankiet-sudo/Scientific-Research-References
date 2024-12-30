@@ -54,11 +54,13 @@ namespace OptimalPLA {
             }
             else {
                 if (l_line->subs(p.x) > p.y + bound || p.y - bound > u_line->subs(p.x)) {
-                    Point2D* p0 = Line::intersection(u_line, l_line);
-                    Line* l = Line::line((u_line->get_slope()+l_line->get_slope())/2, *p0);
+                    Line* l = new Line (
+                        (u_line->get_slope() + l_line->get_slope()) / 2, 
+                        (u_line->get_intercept() + l_line->get_intercept()) / 2
+                    );
                     __yield(compress_data, basetime, length, l);
                     
-                    delete p0; delete p1; delete p2;
+                    delete p1; delete p2;
                     delete l; delete l_line; delete u_line;
                     u_cvx.clear(); l_cvx.clear();
 

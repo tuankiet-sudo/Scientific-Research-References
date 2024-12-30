@@ -2,6 +2,7 @@
 #define ALGEBRAIC_CONVEX_H
 
 #include <vector>
+#include <iostream>
 #include "algebraic/function.h"
 
 class UpperHull {
@@ -46,6 +47,13 @@ class UpperHull {
         void erase_from_begin(int length) {
             this->points.erase(this->points.begin(), this->points.begin() + length);
         }
+
+        void dump() {
+            for (Point2D p : this->points) {
+                std::cout << p.x << "-" << p.y << " ";
+            }
+            std::cout << "\n";
+        }
 };
 
 class LowerHull {
@@ -89,6 +97,13 @@ class LowerHull {
 
         void erase_from_begin(int length) {
             this->points.erase(this->points.begin(), this->points.begin() + length);
+        }
+
+        void dump() {
+            for (Point2D p : this->points) {
+                std::cout << p.x << "-" << p.y << " ";
+            }
+            std::cout << "\n";
         }
 };
 

@@ -258,33 +258,42 @@ def load_data(filename):
 
 # TESTING ENVIRONMENT
 STEP = 19
-ERROR = 20
+ERROR = 0.10325
 
 # MAIN ENTRY
-# data = load_data("data/UCR-time-series/Fungi.csv")
-data = load_data("data/Synthesis/quadratic.csv")
-p_data = load_data("data/Synthesis/p_quadratic.csv")
-swing = Swing()
-swing.fit(data, ERROR)
-algo = Algo()
-algo.fit(data, ERROR)
+data = load_data("data/UCR-time-series/Crop.csv")
+# data = load_data("data/Synthesis/quadratic.csv")
+# p_data = load_data("data/Synthesis/p_quadratic.csv")
+# swing = Swing()
+# swing.fit(data, ERROR)
+# algo = Algo()
+# algo.fit(data, ERROR)
 
-print(len(swing.segs), len(algo.segs))
+# print(len(swing.segs), len(algo.segs))
 
 # PLOT
 plt.figure(figsize=(16, 8))
-# plt.plot([p.t for p in data], [p.v for p in data], color="red")
+plt.plot([p.t for p in data], [p.v for p in data], color="red")
 plt.plot([p.t for p in data], [p.v-ERROR for p in data], color="red")
 plt.plot([p.t for p in data], [p.v+ERROR for p in data], color="red")
 # plt.plot([p.t for p in p_data], [p.v for p in p_data], color="black")
 
+cvx = ConvexHull()
+for p in data:
+    cvx.insert_l(Point(p.t, p.v+ERROR))
+    cvx.insert_u(Point(p.t, p.v-ERROR))
+    
+cvx_u = cvx.get_u()
+plt.plot(cvx_u[0], cvx_u[1], color="green")
+cvx_l = cvx.get_l()
+plt.plot(cvx_l[0], cvx_l[1], color="blue")
 
-index = 0
+# index = 0
 
-for seg in algo.segs:
-    t = np.array([index + i for i in range(seg.length)])
-    plt.plot(t, [seg.a*i*i + seg.b*i + seg.c for i in range(seg.length)], color="black")
-    index += seg.length
+# for seg in algo.segs:
+#     t = np.array([index + i for i in range(seg.length)])
+#     plt.plot(t, [seg.a*i*i + seg.b*i + seg.c for i in range(seg.length)], color="black")
+#     index += seg.length
     
 # for seg in swing.segs:
 #     t = np.array([index + i for i in range(seg.length)])

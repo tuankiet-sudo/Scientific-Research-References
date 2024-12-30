@@ -26,10 +26,10 @@ int main(int argc, char** argv) {
     else if (ALGO == "hybrid-pca") {
         HybridPCA::decompress(INPUT, OUTPUT, INTERVAL);
     }
-    else if (ALGO == "swing") {
+    else if (ALGO == "swing-filter") {
         SwingFilter::decompress(INPUT, OUTPUT, INTERVAL);
     }
-    else if (ALGO == "slide") {
+    else if (ALGO == "slide-filter") {
         SlideFilter::decompress(INPUT, OUTPUT, INTERVAL);
     }
     else if (ALGO == "optimal-pla") {

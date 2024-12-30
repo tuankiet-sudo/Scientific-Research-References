@@ -45,10 +45,10 @@ int main(int argc, char** argv) {
     else if (ALGO == "hybrid-pca") {
         HybridPCA::compress(timeseries, atoi(argv[6]), atoi(argv[7]), ERROR, OUTPUT);
     }
-    else if (ALGO == "swing") {
+    else if (ALGO == "swing-filter") {
         SwingFilter::compress(timeseries, ERROR, OUTPUT);
     }
-    else if (ALGO == "slide") {
+    else if (ALGO == "slide-filter") {
         SlideFilter::compress(timeseries, ERROR, OUTPUT);
     }
     else if (ALGO == "optimal-pla") {

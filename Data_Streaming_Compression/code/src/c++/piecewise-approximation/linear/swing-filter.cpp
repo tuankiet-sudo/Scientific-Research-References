@@ -33,7 +33,6 @@ namespace SwingFilter {
         double a_ig = temp > l->get_slope() ? temp : l->get_slope();
         double b_ig = p->y - a_ig * p->x;
 
-        delete p;
         return new Line(a_ig, b_ig);
     }
 
@@ -67,7 +66,7 @@ namespace SwingFilter {
             }
             else {
                 if (l_line->subs(p.x) > p.y + bound || p.y - bound > u_line->subs(p.x)) {
-                    Line* l = __fit(segment, u_line, l_line, &p);
+                    Line* l = __fit(segment, u_line, l_line, p1);
                     __yield(compress_data, basetime, length, l);
                     
                     delete p1; delete p2;
@@ -77,6 +76,7 @@ namespace SwingFilter {
                     length = 0;
                     basetime = data->get_time();
                     p1 = new Point2D(0, p.y);
+                    p.x = 0;
                 }
                 else {
                     if (p.y + bound < u_line->subs(p.x)) {

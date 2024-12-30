@@ -44,6 +44,12 @@ if __name__ == "__main__":
     elif ALGO == "optimal-pla":
         print(0)
         
+    elif ALGO == "swing-filter":
+        print(0)
+        
+    elif ALGO == "slide-filter":
+        print(0)
+        
     else:
         print(Error.INVALID_ALGO.value)
         

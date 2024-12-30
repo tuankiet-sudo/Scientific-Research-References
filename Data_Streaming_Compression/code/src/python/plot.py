@@ -24,10 +24,6 @@ if __name__ == "__main__":
         legend = sys.argv[i]
         time, data = load(sys.argv[i+1], 1)
         if i != 1:
-            time, l_data = load(sys.argv[i+1], 2)
-            time, u_data = load(sys.argv[i+1], 3)
-            plt.plot(time, u_data, color="black", label="u_line")
-            plt.plot(time, l_data, color="green", label="l_line")
             plt.plot(time, data, label=legend, color="blue")
         elif i == 1:
             plt.plot(time, data-20, color="red")
