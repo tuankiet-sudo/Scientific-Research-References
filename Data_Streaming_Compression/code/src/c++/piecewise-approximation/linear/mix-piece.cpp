@@ -143,7 +143,7 @@ namespace MixPiece {
         }
 
         std::sort(ungrouped.begin(), ungrouped.end(), 
-            [](const GroupedB& a, const GroupedB& b){ return a.a_l < b.a_l; });
+            [](const Interval& a, const Interval& b){ return a.a_l < b.a_l; });
 
         GroupedA group;
         for (GroupedB interval : ungrouped) {
@@ -172,6 +172,7 @@ namespace MixPiece {
             rests.push_back(Rest(group.b[0], group.a_u, group.a_l, group.t[0], group.length[0]));
         }
 
+        compress_data->put((int)groups_b.size() + (int)groups_a.size() + (int)rests.size());
         __yield(compress_data, groups_b);
         __yield(compress_data, groups_a);
         __yield(compress_data, rests);
@@ -295,7 +296,7 @@ namespace MixPiece {
         IterIO outputFile(output, false);
         BinObj* compress_data = inputFile.readBin();
 
-        while (compress_data->getSize() != 0) {
+        while (compress_data->getSize() ! = 0) {
             clock.start();
 
             // Decompress part 1
@@ -321,7 +322,7 @@ namespace MixPiece {
                 int blocks = compress_data->getInt();
                 while (blocks-- > 0) {
                     float b = compress_data->getFloat();
-                    time_t basetime = compress_data->getLong();
+                    time_t t = compress_data->getLong();
                     int length = compress_data->getInt();
                     __decompress_segment(outputFile, interval, basetime, length, a, b);
                 }
@@ -334,7 +335,7 @@ namespace MixPiece {
                 float b = compress_data->getFloat();
                 time_t basetime = compress_data->getLong();
                 int length = compress_data->getInt();
-                __decompress_segment(outputFile, interval, basetime, length, a, b);
+                __decompress_block(outputFile, interval, basetime, length, a, b);
             }
 
             clock.stop();
