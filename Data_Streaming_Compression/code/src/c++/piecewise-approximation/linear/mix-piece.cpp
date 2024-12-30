@@ -5,8 +5,8 @@ namespace MixPiece {
     struct Interval {
         float a_u;
         float a_l;
-        int length;
         time_t t;
+        int length;
 
         Interval(float a_u, float a_l, int length, time_t t) {
             this->a_u = a_u;
