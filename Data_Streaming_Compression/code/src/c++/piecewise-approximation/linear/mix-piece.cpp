@@ -16,166 +16,228 @@ namespace MixPiece {
         }
     };
 
-    struct GroupedB {
+    struct B_Block {
+
+        struct Block {
+            float a_u = INFINITY;
+            float a_l = -INFINITY;
+            std::vector<time_t> t;
+            std::vector<int> n;
+
+            Block(float a_u, float a_l, time_t t, int n) {
+                this->a_u = a_u;
+                this->a_l = a_l;
+                this->t.push_back(t);
+                this->n.push_back(n);
+            }
+        };
+
         float b;
+        std::vector<Block> blocks;
+
+        B_Block(float b) {
+            this->b = b;
+        }
+
+        B_Block(float b, float a_u, float a_l, time_t t, int n) {
+            this->b = b;
+            this->blocks.push_back(Block(a_u, a_l, t, n));
+        }
+
+        bool is_intersect(float a_u, float a_l) {
+            return a_l <= this->blocks.back().a_u && a_u >= this->blocks.back().a_l;
+        } 
+
+        void intersect(float a_u, float a_l, time_t t, int n) {
+            if (this->blocks.back().a_u > a_u) this->blocks.back().a_u = a_u;
+            if (this->blocks.back().a_l < a_l) this->blocks.back().a_l = a_l;
+
+            this->blocks.back().t.push_back(t);
+            this->blocks.back().n.push_back(n);
+        }
+    };
+
+    struct A_Block {
+
+        struct Block {
+            float b;
+            time_t t;
+            int n;
+
+            Block(float b, time_t t, int n) {
+                this->b = b;
+                this->t = t;
+                this->n = n;
+            }
+        };
+
         float a_u;
         float a_l;
-        std::vector<time_t> t;
-        std::vector<int> length;
+        std::vector<Block> blocks;
 
-        GroupedB(float b) {
-            this->b = b;
+        A_Block() {
             this->a_u = INFINITY;
             this->a_l = -INFINITY;
         }
 
-        GroupedB(float b, float a_u, float a_l, time_t t, int length) {
-            this->b = b;
-            this->a_l = a_l;
+        A_Block(float b, float a_u, float a_l, time_t t, int n) {
             this->a_u = a_u;
-            this->t.push_back(t);
-            this->length.push_back(length);
+            this->a_l = a_l;
+
+            this->blocks.push_back(Block(b, t, n));
+        }
+
+        bool is_intersect(float a_u, float a_l) {
+            return a_l <= this->a_u && a_u >= this->a_l;
+        } 
+
+        void intersect(float b, float a_u, float a_l, time_t t, int n) {
+            if (this->a_u > a_u) this->a_u = a_u;
+            if (this->a_l < a_l) this->a_l = a_l;
+
+            this->blocks.push_back(Block(b, t, n));
         }
     };
 
-    struct GroupedA {
-        float a_u;
-        float a_l;
-        std::vector<float> b;
-        std::vector<time_t> t;
-        std::vector<int> length;
-
-        GroupedA() {
-            this->a_u = INFINITY;
-            this->a_l = -INFINITY;
-        }
-
-        GroupedA(float b, float a_u, float a_l, time_t t, int length) {
-            this->a_l = a_l;
-            this->a_u = a_u;
-            this->b.push_back(b);
-            this->t.push_back(t);
-            this->length.push_back(length);
-        }
-    };
-
-    struct Rest {
+    struct R_Block {
         float a_u;
         float a_l;
         float b;
         time_t t;
-        int length;
+        int n;
 
-        Rest(float b, float a_u, float a_l, time_t t, int length) {
+        R_Block(float b, float a_u, float a_l, time_t t, int n) {
             this->b = b;
             this->a_u = a_u;
             this->a_l = a_l;
             this->t = t;
-            this->length = length;
+            this->n = n;
+        }
+
+        float a() {
+            return (a_u + a_l) / 2;
         }
     };
 
     Clock clock;
 
-    void __yield(BinObj* obj, std::vector<GroupedB> groups_b) {
-        obj->put((int)groups_b.size());
-        float b = groups_b[0].b;
-        int count = 0;
+    void __yield(BinObj* obj, std::vector<B_Block> b_blocks) {
+        obj->put((int) b_blocks.size());
+        for (B_Block b_block : b_blocks) {
+            float b = b_block.b;
+            obj->put(b);
+            obj->put((int) b_block.blocks.size());
 
-        BinObj record;
-        for (GroupedB group_b : groups_b) {
-            if (b == group_b.b) {
+            for (B_Block::Block block : b_block.blocks) {
+                float a = (block.a_l + block.a_u) / 2;
+                obj->put(a);
+                obj->put((int) block.t.size());
 
+                for (int i=0; i<block.t.size(); i++) {
+                    obj->put(block.t[i]);
+                    obj->put(block.n[i]);
+                }
             }
-            else {
-                count = 0;
-                record = BinObj();
-            }
-
-            count++;
         }
     }
 
-    void __yield(BinObj* obj, std::vector<GroupedA> groups_a) {
-        obj->put((int)groups_a.size());
+    void __yield(BinObj* obj, std::vector<A_Block> a_blocks) {
+        obj->put((int) a_blocks.size());
+        for (A_Block a_block : a_blocks) {
+            float a = (a_block.a_u + a_block.a_l) / 2;
+            obj->put(a);
+            obj->put((int) a_block.blocks.size());
+
+            for (A_Block::Block block : a_block.blocks) {
+                obj->put(block.b);
+                obj->put(block.t);
+                obj->put(block.n);
+            }
+        }
     }
 
-    void __yield(BinObj* obj, std::vector<Rest> rest) {
-        obj->put((int)rest.size());
+    void __yield(BinObj* obj, std::vector<R_Block> r_blocks) {
+        obj->put((int) r_blocks.size());
+        for (R_Block r_block : r_blocks) {
+            obj->put(r_block.t);
+            obj->put(r_block.n);
+            obj->put(r_block.a());
+            obj->put(r_block.b);
+        }
     }
 
     void __group(BinObj* compress_data, std::map<float, std::vector<Interval>>& b_intervals) {
-        std::vector<GroupedB> groups_b;
-        std::vector<GroupedA> groups_a;
-        std::vector<Rest> rests;
+        std::vector<B_Block> b_blocks;
+        std::vector<A_Block> a_blocks;
+        std::vector<R_Block> r_blocks;
 
-        std::vector<GroupedB> ungrouped;
+        std::vector<std::pair<float, Interval>> ungrouped;
         for (std::pair<float, std::vector<Interval>> it : b_intervals) {
             float b = it.first;
             std::vector<Interval> intervals = it.second;
             std::sort(intervals.begin(), intervals.end(), 
                 [](const Interval& a, const Interval& b){ return a.a_l < b.a_l; });
 
-            GroupedB group(b);
+            B_Block group(b);
             for (Interval& interval : intervals) {
-                if (interval.a_l <= group.a_u && interval.a_u >= group.a_l) {
-                    group.a_u = group.a_u > interval.a_u ? interval.a_u : group.a_u;
-                    group.a_l = group.a_l < interval.a_l ? interval.a_l : group.a_l;
-                    group.length.push_back(interval.length);
-                    group.t.push_back(interval.t);
+                if (group.is_intersect(interval.a_u, interval.a_l)) {
+                    group.intersect(interval.a_u, interval.a_l, interval.t, interval.length);
                 }
-                else if (group.t.size() > 1) {
-                    groups_b.push_back(group);
-                    group = GroupedB(b, interval.a_u, interval.a_l, interval.t, interval.length);
+                else if (group.blocks.back().t.size() > 1) {
+                    b_blocks.push_back(group);
+                    group = B_Block(b, interval.a_u, interval.a_l, interval.t, interval.length);
                 }
                 else {
-                    ungrouped.push_back(group);
-                    group = GroupedB(b, interval.a_u, interval.a_l, interval.t, interval.length);
+                    ungrouped.push_back(std::make_pair(b, Interval(interval.a_u, interval.a_l, interval.length, interval.t)));
+                    group = B_Block(b, interval.a_u, interval.a_l, interval.t, interval.length);
                 }
             }
 
-            if (group.t.size() > 1) {
-                groups_b.push_back(group);
+            if (group.blocks.back().t.size() > 1) {
+                b_blocks.push_back(group);
             }
             else {
-                ungrouped.push_back(group);
+                ungrouped.push_back(std::make_pair(b, Interval(
+                    group.blocks.back().a_u, group.blocks.back().a_l, 
+                    group.blocks.back().n[0], group.blocks.back().t[0]))
+                );
             }
         }
 
         std::sort(ungrouped.begin(), ungrouped.end(), 
-            [](const Interval& a, const Interval& b){ return a.a_l < b.a_l; });
+            [](const std::pair<float, Interval>& a, const std::pair<float, Interval>& b)
+            { return a.second.a_l < b.second.a_l; });
 
-        GroupedA group;
-        for (GroupedB interval : ungrouped) {
-            if (interval.a_l <= group.a_l && interval.a_u >= group.a_l) {
-                group.a_u = group.a_u > interval.a_u ? interval.a_u : group.a_u;
-                group.a_l = group.a_l < interval.a_l ? interval.a_l : group.a_l;
-                
-                group.b.push_back(interval.b);
-                group.t.push_back(interval.t[0]);
-                group.length.push_back(interval.length[0]);
+        A_Block group;
+        for (std::pair<float, Interval>& entry : ungrouped) {
+            if (group.is_intersect(entry.second.a_u, entry.second.a_l)) {
+                group.intersect(entry.first, entry.second.a_u, entry.second.a_l, 
+                    entry.second.t, entry.second.length);
             }
-            else if (group.t.size() > 1) {
-                groups_a.push_back(group);
-                group = GroupedA(interval.b, interval.a_u, interval.a_l, interval.t[0], interval.length[0]); 
+            else if (group.blocks.size() > 1) {
+                a_blocks.push_back(group);
+                group = A_Block(entry.first, entry.second.a_u, entry.second.a_l, 
+                    entry.second.t, entry.second.length); 
             }
             else {
-                rests.push_back(Rest(group.b[0], group.a_u, group.a_l, group.t[0], group.length[0]));
-                group = GroupedA(interval.b, interval.a_u, interval.a_l, interval.t[0], interval.length[0]); 
+                r_blocks.push_back(R_Block(group.blocks[0].b, group.a_u, group.a_l, 
+                    group.blocks[0].t, group.blocks[0].n));
+                group = A_Block(entry.first, entry.second.a_u, entry.second.a_l, 
+                    entry.second.t, entry.second.length); 
             }
         }
 
-        if (group.t.size() > 1) {
-            groups_a.push_back(group);
+        if (group.blocks.size() > 1) {
+            a_blocks.push_back(group);
         }
         else {
-            rests.push_back(Rest(group.b[0], group.a_u, group.a_l, group.t[0], group.length[0]));
+            r_blocks.push_back(R_Block(group.blocks[0].b, group.a_u, 
+                group.a_l, group.blocks[0].t, group.blocks[0].n));
         }
 
-        compress_data->put((int)groups_b.size() + (int)groups_a.size() + (int)rests.size());
-        __yield(compress_data, groups_b);
-        __yield(compress_data, groups_a);
-        __yield(compress_data, rests);
+        __yield(compress_data, b_blocks);
+        __yield(compress_data, a_blocks);
+        __yield(compress_data, r_blocks);
     }
     
     void compress(TimeSeries& timeseries, int n_segment, float bound, std::string output) {
@@ -296,7 +358,7 @@ namespace MixPiece {
         IterIO outputFile(output, false);
         BinObj* compress_data = inputFile.readBin();
 
-        while (compress_data->getSize() ! = 0) {
+        while (compress_data->getSize() != 0) {
             clock.start();
 
             // Decompress part 1
@@ -322,7 +384,7 @@ namespace MixPiece {
                 int blocks = compress_data->getInt();
                 while (blocks-- > 0) {
                     float b = compress_data->getFloat();
-                    time_t t = compress_data->getLong();
+                    time_t basetime = compress_data->getLong();
                     int length = compress_data->getInt();
                     __decompress_segment(outputFile, interval, basetime, length, a, b);
                 }
@@ -335,7 +397,7 @@ namespace MixPiece {
                 float b = compress_data->getFloat();
                 time_t basetime = compress_data->getLong();
                 int length = compress_data->getInt();
-                __decompress_block(outputFile, interval, basetime, length, a, b);
+                __decompress_segment(outputFile, interval, basetime, length, a, b);
             }
 
             clock.stop();
