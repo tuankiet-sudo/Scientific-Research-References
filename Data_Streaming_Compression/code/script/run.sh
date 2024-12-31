@@ -31,14 +31,14 @@ echo "Start compressing..."
 bin/compress $1 out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.bin out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon $2 "${@:4}"
 
 
-# # Decompressing phase
-# echo -e "\n-------------------------"
-# echo "Decompressing file: $DATA"_"$FILE"_"$ALGO"_"$ID.csv"
-# echo "Decompressing profile: $DATA"_"$FILE"_"$ALGO"_"$ID.mon"
-# touch out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.csv out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon
+# Decompressing phase
+echo -e "\n-------------------------"
+echo "Decompressing file: $DATA"_"$FILE"_"$ALGO"_"$ID.csv"
+echo "Decompressing profile: $DATA"_"$FILE"_"$ALGO"_"$ID.mon"
+touch out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.csv out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon
 
-# echo "Start decompressing..."
-# bin/decompress out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.bin out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.csv out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon $3 $4 $2
+echo "Start decompressing..."
+bin/decompress out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.bin out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.csv out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon $3 $4 $2
 
 # # Statistic phase
 # echo -e "\n-------------------------"

@@ -25,8 +25,8 @@ namespace MixPiece {
             std::vector<int> n;
 
             Block() {
-                this->a_u = a_u;
-                this->a_l = a_l;
+                this->a_u = INFINITY;
+                this->a_l = -INFINITY;
             }
 
             Block(float a_u, float a_l, time_t t, int n) {
@@ -145,6 +145,8 @@ namespace MixPiece {
                 }
             }
         }
+
+        std::cout << "complete b_block\n";
     }
 
     void __yield(BinObj* obj, std::vector<A_Block> a_blocks) {
@@ -160,6 +162,8 @@ namespace MixPiece {
                 obj->put(block.n);
             }
         }
+
+        std::cout << "complete a_block\n";
     }
 
     void __yield(BinObj* obj, std::vector<R_Block> r_blocks) {
@@ -170,6 +174,8 @@ namespace MixPiece {
             obj->put(r_block.a());
             obj->put(r_block.b);
         }
+
+        std::cout << "complete r_block\n";
     }
 
     void __group(BinObj* compress_data, std::map<float, std::vector<Interval>>& b_intervals) {
@@ -180,14 +186,12 @@ namespace MixPiece {
         std::vector<std::pair<float, Interval>> ungrouped;
         for (std::pair<float, std::vector<Interval>> it : b_intervals) {
             float b = it.first;
-            std::cout << "count\n";
             std::vector<Interval> intervals = it.second;
             std::sort(intervals.begin(), intervals.end(), 
                 [](const Interval& a, const Interval& b){ return a.a_l < b.a_l; });
 
             B_Block group(b);
             for (Interval& interval : intervals) {
-                std::cout << "count\n";
                 if (group.is_intersect(interval.a_u, interval.a_l)) {
                     group.intersect(interval.a_u, interval.a_l, interval.t, interval.length);
                 }
@@ -216,11 +220,6 @@ namespace MixPiece {
             [](const std::pair<float, Interval>& a, const std::pair<float, Interval>& b)
             { return a.second.a_l < b.second.a_l; });
 
-        for (auto& it : ungrouped) {
-            std::cout << it.second.a_l << " ";
-        }
-        std::cout << "\n";
-
         A_Block group;
         for (std::pair<float, Interval>& entry : ungrouped) {
             if (group.is_intersect(entry.second.a_u, entry.second.a_l)) {
@@ -247,8 +246,6 @@ namespace MixPiece {
             r_blocks.push_back(R_Block(group.blocks[0].b, group.a_u, 
                 group.a_l, group.blocks[0].t, group.blocks[0].n));
         }
-
-        std::cout << b_blocks.size() << " " << a_blocks.size() << " " << r_blocks.size() << "\n";
 
         __yield(compress_data, b_blocks);
         __yield(compress_data, a_blocks);
