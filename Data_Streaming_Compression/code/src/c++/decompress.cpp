@@ -38,6 +38,9 @@ int main(int argc, char** argv) {
     else if (ALGO == "normal-equation") {
         NormalEquation::decompress(INPUT, OUTPUT, INTERVAL);
     }
+    else if (ALGO == "mix-piece") {
+        MixPiece::decompress(INPUT, OUTPUT, INTERVAL);
+    }
 
     Monitor::stop();
     monitor.join();

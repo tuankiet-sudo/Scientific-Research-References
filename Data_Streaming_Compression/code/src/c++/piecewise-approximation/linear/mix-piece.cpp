@@ -19,10 +19,15 @@ namespace MixPiece {
     struct B_Block {
 
         struct Block {
-            float a_u = INFINITY;
-            float a_l = -INFINITY;
+            float a_u;
+            float a_l;
             std::vector<time_t> t;
             std::vector<int> n;
+
+            Block() {
+                this->a_u = a_u;
+                this->a_l = a_l;
+            }
 
             Block(float a_u, float a_l, time_t t, int n) {
                 this->a_u = a_u;
@@ -37,6 +42,7 @@ namespace MixPiece {
 
         B_Block(float b) {
             this->b = b;
+            this->blocks.push_back(Block());
         }
 
         B_Block(float b, float a_u, float a_l, time_t t, int n) {
@@ -46,7 +52,7 @@ namespace MixPiece {
 
         bool is_intersect(float a_u, float a_l) {
             return a_l <= this->blocks.back().a_u && a_u >= this->blocks.back().a_l;
-        } 
+        }
 
         void intersect(float a_u, float a_l, time_t t, int n) {
             if (this->blocks.back().a_u > a_u) this->blocks.back().a_u = a_u;
@@ -174,12 +180,14 @@ namespace MixPiece {
         std::vector<std::pair<float, Interval>> ungrouped;
         for (std::pair<float, std::vector<Interval>> it : b_intervals) {
             float b = it.first;
+            std::cout << "count\n";
             std::vector<Interval> intervals = it.second;
             std::sort(intervals.begin(), intervals.end(), 
                 [](const Interval& a, const Interval& b){ return a.a_l < b.a_l; });
 
             B_Block group(b);
             for (Interval& interval : intervals) {
+                std::cout << "count\n";
                 if (group.is_intersect(interval.a_u, interval.a_l)) {
                     group.intersect(interval.a_u, interval.a_l, interval.t, interval.length);
                 }
@@ -208,6 +216,11 @@ namespace MixPiece {
             [](const std::pair<float, Interval>& a, const std::pair<float, Interval>& b)
             { return a.second.a_l < b.second.a_l; });
 
+        for (auto& it : ungrouped) {
+            std::cout << it.second.a_l << " ";
+        }
+        std::cout << "\n";
+
         A_Block group;
         for (std::pair<float, Interval>& entry : ungrouped) {
             if (group.is_intersect(entry.second.a_u, entry.second.a_l)) {
@@ -234,6 +247,8 @@ namespace MixPiece {
             r_blocks.push_back(R_Block(group.blocks[0].b, group.a_u, 
                 group.a_l, group.blocks[0].t, group.blocks[0].n));
         }
+
+        std::cout << b_blocks.size() << " " << a_blocks.size() << " " << r_blocks.size() << "\n";
 
         __yield(compress_data, b_blocks);
         __yield(compress_data, a_blocks);
@@ -277,14 +292,14 @@ namespace MixPiece {
                 if (floor_flag) flag++;
                 if (ceil_flag) flag--;
 
-                if (!floor_flag and !ceil_flag) {
+                if (!floor_flag && !ceil_flag) {
                     if (flag > 0) {
-                        std::vector<Interval> vec = b_intervals.at(b_1);
+                        std::vector<Interval> vec = b_intervals[b_1];
                         vec.push_back(Interval(slp_u_1, slp_l_1, length, basetime));
                         b_intervals[b_1] = vec;
                     }
                     else {
-                        std::vector<Interval> vec = b_intervals.at(b_2);
+                        std::vector<Interval> vec = b_intervals[b_2];
                         vec.push_back(Interval(slp_u_2, slp_l_2, length, basetime));
                         b_intervals[b_2] = vec;
                     }
@@ -292,6 +307,11 @@ namespace MixPiece {
                     count++;
                     length = 0; flag = 0;
                     floor_flag = true; ceil_flag = true;
+                    
+                    p.x = 0;
+                    basetime = data->get_time();
+                    b_1 = floor(p.y / bound) * bound;
+                    b_2 = ceil(p.y / bound) * bound;
                     slp_u_1 = INFINITY; slp_u_2 = INFINITY;
                     slp_l_1 = -INFINITY; slp_l_2 = -INFINITY;
                 }
@@ -316,24 +336,23 @@ namespace MixPiece {
                 }
             }
 
+            length++;
             clock.stop();
         }
 
-        if (!floor_flag and !ceil_flag) {
-            if (flag > 0) {
-                std::vector<Interval> vec = b_intervals.at(b_1);
-                vec.push_back(Interval(slp_u_1, slp_l_1, length, basetime));
-                b_intervals[b_1] = vec;
-            }
-            else {
-                std::vector<Interval> vec = b_intervals.at(b_2);
-                vec.push_back(Interval(slp_u_2, slp_l_2, length, basetime));
-                b_intervals[b_2] = vec;
-            }
-
-            __group(compress_data, b_intervals);
-            b_intervals.clear();
+        if (flag > 0) {
+            std::vector<Interval> vec = b_intervals[b_1];
+            vec.push_back(Interval(slp_u_1, slp_l_1, length, basetime));
+            b_intervals[b_1] = vec;
         }
+        else {
+            std::vector<Interval> vec = b_intervals[b_2];
+            vec.push_back(Interval(slp_u_2, slp_l_2, length, basetime));
+            b_intervals[b_2] = vec;
+        }
+
+        __group(compress_data, b_intervals);
+        b_intervals.clear();
 
         outputFile.writeBin(compress_data);
         outputFile.close();
@@ -345,6 +364,8 @@ namespace MixPiece {
 
 
     void __decompress_segment(IterIO& file, int interval, time_t basetime, int length, float slope, float intercept) {
+        std::cout << basetime << " " << length << " " << slope << " " << intercept << "\n";
+        
         for (int i=0; i<length; i++) {
             CSVObj obj;
             obj.pushData(std::to_string(basetime + interval * i));

@@ -57,6 +57,9 @@ int main(int argc, char** argv) {
     else if (ALGO == "normal-equation") {
         NormalEquation::compress(timeseries, argv[6], atoi(argv[7]), ERROR, OUTPUT);
     }
+    else if (ALGO == "mix-piece") {
+        MixPiece::compress(timeseries, atoi(argv[6]), ERROR, OUTPUT);
+    }
 
     timeseries.finalize();
     Monitor::stop();
