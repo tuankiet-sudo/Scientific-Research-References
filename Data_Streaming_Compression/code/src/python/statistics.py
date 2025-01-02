@@ -11,14 +11,18 @@ def load(origin, approx):
     with open(origin, 'r') as file:
         csvFile = csv.reader(file)
         for line in csvFile:
-            origin_data.append(float(line[1]))
-                    
+            origin_data.append([int(line[0]), float(line[1])])
+        
+        origin_data = sorted(origin_data, key=lambda a_entry: a_entry[0]) 
+                
     with open(approx, 'r') as file:
         csvFile = csv.reader(file)
         for line in csvFile:
-            approx_data.append(float(line[1]))
+            approx_data.append([int(line[0]), float(line[1])])
         
-    return np.array(origin_data), np.array(approx_data)
+        approx_data = sorted(approx_data, key=lambda a_entry: a_entry[0]) 
+    
+    return np.array(origin_data)[:, 1], np.array(approx_data)[:, 1]
 
 
 def load_monitor(compress, decompress):

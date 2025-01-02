@@ -165,10 +165,10 @@ namespace MixPiece {
     void __yield(BinObj* obj, std::vector<R_Block> r_blocks) {
         obj->put((int) r_blocks.size());
         for (R_Block block : r_blocks) {
-            obj->put(block.t);
-            obj->put(block.n);
             obj->put(block.a());
             obj->put(block.b);
+            obj->put(block.t);
+            obj->put(block.n);
         }
     }
 
@@ -195,7 +195,10 @@ namespace MixPiece {
                     group = B_Block(b, interval.a_u, interval.a_l, interval.t, interval.length);
                 }
                 else {
-                    ungrouped.push_back(std::make_pair(b, Interval(interval.a_u, interval.a_l, interval.length, interval.t)));
+                    ungrouped.push_back(std::make_pair(b, Interval(
+                        group.blocks[0].a_u, group.blocks[0].a_l, 
+                        group.blocks[0].n[0], group.blocks[0].t[0])
+                    ));
                     group = B_Block(b, interval.a_u, interval.a_l, interval.t, interval.length);
                 }
             }
@@ -355,9 +358,7 @@ namespace MixPiece {
     }
 
 
-    void __decompress_segment(IterIO& file, int interval, time_t basetime, int length, float slope, float intercept) {
-        std::cout << basetime << " " << length << " " << slope << " " << intercept << "\n";
-        
+    void __decompress_segment(IterIO& file, int interval, time_t basetime, int length, float slope, float intercept) {                
         for (int i=0; i<length; i++) {
             CSVObj obj;
             obj.pushData(std::to_string(basetime + interval * i));
