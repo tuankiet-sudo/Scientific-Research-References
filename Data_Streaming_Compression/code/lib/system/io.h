@@ -5,6 +5,7 @@
 #include <fstream>
 #include <vector>
 #include <sstream>
+#include <iostream>
 
 using Byte = unsigned char;
 const char HEX[16] = {'0', '1', '2', '3', '4', '5', '6', '7',

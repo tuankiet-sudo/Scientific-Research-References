@@ -145,8 +145,6 @@ namespace MixPiece {
                 }
             }
         }
-
-        std::cout << "complete b_block\n";
     }
 
     void __yield(BinObj* obj, std::vector<A_Block> a_blocks) {
@@ -162,20 +160,16 @@ namespace MixPiece {
                 obj->put(block.n);
             }
         }
-
-        std::cout << "complete a_block\n";
     }
 
     void __yield(BinObj* obj, std::vector<R_Block> r_blocks) {
         obj->put((int) r_blocks.size());
-        for (R_Block r_block : r_blocks) {
-            obj->put(r_block.t);
-            obj->put(r_block.n);
-            obj->put(r_block.a());
-            obj->put(r_block.b);
+        for (R_Block block : r_blocks) {
+            obj->put(block.t);
+            obj->put(block.n);
+            obj->put(block.a());
+            obj->put(block.b);
         }
-
-        std::cout << "complete r_block\n";
     }
 
     void __group(BinObj* compress_data, std::map<float, std::vector<Interval>>& b_intervals) {
@@ -184,9 +178,10 @@ namespace MixPiece {
         std::vector<R_Block> r_blocks;
 
         std::vector<std::pair<float, Interval>> ungrouped;
-        for (std::pair<float, std::vector<Interval>> it : b_intervals) {
-            float b = it.first;
-            std::vector<Interval> intervals = it.second;
+        for (auto it = b_intervals.begin(); it != b_intervals.end(); it++) {
+            float b = it->first;
+            
+            std::vector<Interval> intervals = it->second;
             std::sort(intervals.begin(), intervals.end(), 
                 [](const Interval& a, const Interval& b){ return a.a_l < b.a_l; });
 
@@ -350,7 +345,7 @@ namespace MixPiece {
 
         __group(compress_data, b_intervals);
         b_intervals.clear();
-
+        
         outputFile.writeBin(compress_data);
         outputFile.close();
         delete compress_data;
