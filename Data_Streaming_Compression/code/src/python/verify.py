@@ -50,6 +50,9 @@ if __name__ == "__main__":
     elif ALGO == "slide-filter":
         print(0)
         
+    elif ALGO == "algo":
+        print(0)
+        
     elif ALGO == "mix-piece":
         if len(sys.argv) < 3:
             print(Error.MISSING_PARAM.value)

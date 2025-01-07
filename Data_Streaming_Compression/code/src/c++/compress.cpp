@@ -60,6 +60,9 @@ int main(int argc, char** argv) {
     else if (ALGO == "mix-piece") {
         MixPiece::compress(timeseries, atoi(argv[6]), ERROR, OUTPUT);
     }
+    else if (ALGO == "algo") {
+        Algo::compress(timeseries, ERROR, OUTPUT);
+    }
 
     timeseries.finalize();
     Monitor::stop();

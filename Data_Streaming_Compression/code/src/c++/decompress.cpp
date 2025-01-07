@@ -41,6 +41,9 @@ int main(int argc, char** argv) {
     else if (ALGO == "mix-piece") {
         MixPiece::decompress(INPUT, OUTPUT, INTERVAL);
     }
+    else if (ALGO == "algo") {
+        Algo::decompress(INPUT, OUTPUT, INTERVAL);
+    }
 
     Monitor::stop();
     monitor.join();
