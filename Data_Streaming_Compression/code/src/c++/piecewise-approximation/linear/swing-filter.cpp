@@ -68,7 +68,7 @@ namespace SwingFilter {
                 if (l_line->subs(p.x) > p.y + bound || p.y - bound > u_line->subs(p.x)) {
                     Line* l = __fit(segment, u_line, l_line, p1);
                     __yield(compress_data, basetime, length, l);
-                    
+
                     delete p1; delete p2;
                     delete l; delete l_line; delete u_line;
                     segment.clear();
@@ -95,7 +95,7 @@ namespace SwingFilter {
             segment.push_back(p);
             clock.stop();
         }
-
+        
         outputFile.writeBin(compress_data);
         outputFile.close();
         delete compress_data;

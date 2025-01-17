@@ -93,6 +93,10 @@ class Polynomial {
         return result;
     }
 
+    float get_coefficient(int degree) {
+        return this->coefficients[degree];
+    }
+
     std::string str() const {
         std::string s = "";
         for (int i=this->degree; i>0; i--) {

@@ -59,6 +59,10 @@ namespace OptimalPLA {
                         (u_line->get_intercept() + l_line->get_intercept()) / 2
                     );
                     __yield(compress_data, basetime, length, l);
+
+                    // std::cout << "length: " << length << "\n";
+                    // std::cout << "line: " << l->get_slope() << " " << l->get_intercept() << "\n";
+                    // std::cout << "---------------\n";
                     
                     delete p1; delete p2;
                     delete l; delete l_line; delete u_line;
@@ -133,6 +137,7 @@ namespace OptimalPLA {
         IterIO outputFile(output, false);
         BinObj* compress_data = inputFile.readBin();
 
+        int count = 0;
         while (compress_data->getSize() != 0) {
             clock.start();
 
@@ -143,7 +148,10 @@ namespace OptimalPLA {
             __decompress_segment(outputFile, interval, basetime, length, slope, intercept);
             
             clock.stop();
+            count++;
         }
+
+        std::cout << "number of segment " << count << "----\n";
 
         delete compress_data;
         inputFile.close();

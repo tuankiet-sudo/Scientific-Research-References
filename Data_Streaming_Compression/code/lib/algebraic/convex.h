@@ -36,6 +36,10 @@ class UpperHull {
             return this->points.at(i);
         }
 
+        Point2D get_highest() {
+            return this->points.at(this->points.size()-1);
+        }
+
         int size() {
             return this->points.size();
         }
@@ -85,6 +89,10 @@ class LowerHull {
 
         Point2D at(int i) {
             return this->points.at(i);
+        }
+
+        Point2D get_lowest() {
+            return this->points.at(this->points.size()-1);
         }
 
         int size() {
