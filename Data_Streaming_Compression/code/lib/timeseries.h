@@ -6,14 +6,13 @@
 // Source for manipulating time series data
 class Data {};
 
-template <class T>
 class Univariate : public Data {
     private:
         std::time_t time;
-        T value;
+        float value;
     
     public:
-        Univariate(std::time_t time, T val) {
+        Univariate(std::time_t time, float val) {
             this->time = time;
             this->value = val;
         }
@@ -26,7 +25,7 @@ class Univariate : public Data {
             return std::localtime(&this->time);
         }
 
-        T get_value() const {
+        float get_value() const {
             return this->value;
         }
 };

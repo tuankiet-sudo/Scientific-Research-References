@@ -20,8 +20,7 @@ namespace NormalEquation {
     Clock clock;
     std::map<int, Matrix<float>*> cache;
 
-    void __yield(BinObj* obj, time_t basetime, int length, Polynomial* model) {
-        obj->put(basetime);
+    void __yield(BinObj* obj, short length, Polynomial* model) {
         obj->put(length);
         for (int i = 0; i <= model->degree; i++) {
             obj->put(model->coefficients[i]);
@@ -72,12 +71,12 @@ namespace NormalEquation {
             if (model->error == -1) {
                 model->error = -INFINITY;
                 for (int i = 0; i < window.size(); i++) {
-                    float error = std::abs(model->function->subs<int>(i) - window[i].y);
+                    float error = std::abs(model->function->subs(i) - window[i].y);
                     model->error = model->error < error ? error : model->error;
                 }
             }
             else {
-                float error = std::abs(model->function->subs<int>(window.size()-1) - window[window.size()-1].y);
+                float error = std::abs(model->function->subs(window.size()-1) - window[window.size()-1].y);
                 model->error = model->error < error ? error : model->error;
             }
             
@@ -87,11 +86,11 @@ namespace NormalEquation {
             if (model->error == -1) {
                 model->error = 0;
                 for (int i = 0; i < window.size(); i++) {
-                    model->error += std::abs(model->function->subs<int>(i) - window[i].y);
+                    model->error += std::abs(model->function->subs(i) - window[i].y);
                 }
             }
             else {
-                model->error += std::abs(model->function->subs<int>(window.size()-1) - window[window.size()-1].y);
+                model->error += std::abs(model->function->subs(window.size()-1) - window[window.size()-1].y);
             }
             
             return model->error < bound * window.size();
@@ -100,44 +99,34 @@ namespace NormalEquation {
         return false;
     }
 
-    void __decompress_segment(IterIO& file, int interval, time_t basetime, int length, Polynomial* model) {
-        for (int i = 0; i < length; i++) {
-            CSVObj obj;
-            obj.pushData(std::to_string(basetime + i * interval));
-            obj.pushData(std::to_string(model->subs<int>(i)));
-            file.writeStr(&obj);
-        }
-    }
-
     void compress(TimeSeries& timeseries, std::string mode, int degree, float bound, std::string output) {
         IterIO outputFile(output, false);
         BinObj* compress_data = new BinObj;
+        
+        Univariate* d = (Univariate*) timeseries.next();
         compress_data->put(degree);
+        compress_data->put(d->get_time());
+        std::vector<Point2D> window = {Point2D(0, d->get_value())};
 
-        time_t basetime = -1;
-        std::vector<Point2D> window;
         Model* model = nullptr;
         Model* n_model = nullptr;
 
+        unsigned short length = 1;
+        clock.start();
         while (timeseries.hasNext()) {
-            Univariate<float>* data = (Univariate<float>*) timeseries.next();
-            clock.start();
-
-            if (basetime == -1) {
-                basetime = data->get_time();
-            }
-
+            Univariate* data = (Univariate*) timeseries.next();
             window.push_back(Point2D(window.size(), data->get_value()));
+
             if (window.size() == degree + 1) {
                 model = new Model(__calPolynomial(window, degree));
             }
-            if (window.size() > degree + 1) {
+            if (length > 65000 || window.size() > degree + 1) {
                 if (!__approxSuccess(window, model, mode, bound)) {
                     n_model = new Model(__calPolynomial(window, degree));
                     if (!__approxSuccess(window, n_model, mode, bound)) {
-                        __yield(compress_data, basetime, window.size()-1, model->function);
-                        basetime = data->get_time();
+                        __yield(compress_data, length, model->function);
                         window = {Point2D(0, data->get_value())};
+                        length = 0;
 
                         delete model;
                         delete n_model;
@@ -149,7 +138,8 @@ namespace NormalEquation {
                 }
             }
 
-            clock.stop();
+            length++;
+            clock.tick();
         }
 
         for (auto& entry : cache) delete entry.second;
@@ -157,10 +147,21 @@ namespace NormalEquation {
         outputFile.close();
         delete compress_data;
 
-        std::cout << std::fixed << "Time taken for each data points: " 
-        << clock.getAvgDuration() << " nanoseconds \n";
+        // Profile average latency
+        std::cout << "Time taken for each data point (ns): " << clock.getAvgDuration() << "\n";
+        IterIO timeFile(output+".time", false);
+        timeFile.write("Time taken for each data point (ns): " + std::to_string(clock.getAvgDuration()));
+        timeFile.close();
     }
 
+    void __decompress_segment(IterIO& file, int interval, time_t basetime, int length, Polynomial& model) {
+        for (int i = 0; i < length; i++) {
+            CSVObj obj;
+            obj.pushData(std::to_string(basetime + i * interval));
+            obj.pushData(std::to_string(model.subs(i)));
+            file.write(&obj);
+        }
+    }
 
     void decompress(std::string input, std::string output, int interval) {
         IterIO inputFile(input, true, true);
@@ -168,31 +169,32 @@ namespace NormalEquation {
         BinObj* compress_data = inputFile.readBin();
 
         int degree = compress_data->getInt();
+        time_t basetime = compress_data->getLong();
+        clock.start();
         while (compress_data->getSize() != 0) {
-            clock.start();
-
-            time_t basetime = compress_data->getLong();
-            int length = compress_data->getInt();
+            unsigned short length = compress_data->getShort();
             float* coefficients = new float[degree+1];
 
             for (int i = 0; i <= degree; i++) {
                 coefficients[i] = compress_data->getFloat();
             }
-            Polynomial* model = new Polynomial(degree, coefficients);
+            Polynomial model(degree, coefficients);
             __decompress_segment(outputFile, interval, basetime, length, model);
             
-            delete model;
+            basetime += length * interval;
             delete[] coefficients;
-
-            clock.stop();
+            clock.tick();
         }
 
         delete compress_data;
         inputFile.close();
         outputFile.close();
 
-        std::cout << std::fixed << "Time taken to decompress each segment: " 
-        << clock.getAvgDuration() << " nanoseconds\n";
+        // Profile average latency
+        std::cout << "Time taken for each segment (ns): " << clock.getAvgDuration() << "\n";
+        IterIO timeFile(output+".time", false);
+        timeFile.write("Time taken for each segment (ns): " + std::to_string(clock.getAvgDuration()));
+        timeFile.close();
     }
 
 };

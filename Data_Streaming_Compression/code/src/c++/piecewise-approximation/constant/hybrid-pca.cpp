@@ -2,100 +2,97 @@
 
 namespace HybridPCA {
 
-    struct Buffer {
-        float min = INFINITY;
-        float max = -INFINITY;
-        std::vector<Univariate<float>*> data;
-        
-        void append(Univariate<float>* data_point) {
-            this->data.push_back(data_point);
-            this->min = this->min > data_point->get_value() ? data_point->get_value() : this->min;
-            this->max = this->max < data_point->get_value() ? data_point->get_value() : this->max;
+    struct Window {
+        float min;
+        float max;
+        std::vector<Univariate*> data;
+
+        Window() {
+            this->min = INFINITY;
+            this->max = -INFINITY;
         }
 
-        void assign(std::vector<Univariate<float>*>& data) {
-            this->clear();
-            for (Univariate<float>* data_point : data) {
-                this->append(data_point);
-            }
-        }
-
-        int get_size() {
+        int size() {
             return this->data.size();
         }
 
-        time_t get_basetime() {
-            return this->data[0]->get_time();
+        void append(Univariate* p) {
+            this->data.push_back(p);
+            this->min = this->min < p->get_value() ? this->min : p->get_value();
+            this->max = this->max > p->get_value() ? this->max : p->get_value();
         }
+    };
 
-        std::vector<Univariate<float>*> pop(int size) {
-            std::vector<Univariate<float>*> vec(this->data.end() - size, this->data.end());
-            this->data.resize(this->data.size()-size);
+    struct Buffer {
+        float min;
+        float max;
+        std::vector<Window*> windows;
 
+        Buffer() {
             this->min = INFINITY;
             this->max = -INFINITY;
-            for (Univariate<float>* data_point : this->data) {
-                this->min = this->min > data_point->get_value() ? data_point->get_value() : this->min;
-                this->max = this->max < data_point->get_value() ? data_point->get_value() : this->max;
-            }
+        }
 
-            return vec;
+        int size() {
+            return this->windows.size();
+        }
+
+        void pop() {
+            this->windows.pop_back();
+        }
+
+        void append(Window* window) {
+            this->windows.push_back(window);   
+            this->min = this->min < window->min ? this->min : window->min;
+            this->max = this->max > window->max ? this->max : window->max;
+        }
+
+        bool is_appendable(Window* window, float bound) {
+            float n_min = this->min < window->min ? this->min : window->min;
+            float n_max = this->max > window->max ? this->max : window->max;
+
+            return (n_max-n_min)<=2*bound;
         }
 
         void clear() {
             this->min = INFINITY;
             this->max = -INFINITY;
-            this->data.clear();
+            for (Window* window : this->windows) 
+                delete window;
+
+            this->windows.clear();
         }
     };
 
     Clock clock;
 
-    void __yield(BinObj* obj, time_t basetime, int length, float value) {
-        obj->put(basetime);
+    void __yield(BinObj* obj, short length, float value) {
         obj->put(length);
         obj->put(value);
     }
 
-    void __decompress_segment(IterIO& file, int interval, time_t basetime, int length, float value) {
-        for (int i = 0; i < length; i++) {
-            CSVObj obj;
-            obj.pushData(std::to_string(basetime + i * interval));
-            obj.pushData(std::to_string(value));
-            file.writeStr(&obj);
-        }
-    }
-
-    void __pmc(BinObj* obj, Buffer& window, float bound) {
-        int length = 0;
-        time_t basetime = -1;
+    void __pmc(BinObj* obj, Window* window, float bound) {
         float min = INFINITY;
         float max = -INFINITY;
         float value = 0;
         
-        for (Univariate<float>* data : window.data) {
-            clock.start();
-
-            if (basetime == -1) {
-                basetime = data->get_time();
-            }
-
+        unsigned short length = 0;
+        for (Univariate* data : window->data) {
             min = min < data->get_value() ? min : data->get_value();
             max = max > data->get_value() ? max : data->get_value();
             
             if (max - min > 2 * bound) {
-                __yield(obj, basetime, length, value);
+                __yield(obj, length, value);
                 min = data->get_value();
                 max = data->get_value();
-                basetime = data->get_time();
                 length = 0;
             }
             value = (max + min) / 2;
             
             length++;
-            clock.stop();
         }
-        __yield(obj, basetime, length, value);
+
+        if (length > 0) __yield(obj, length, value);
     }
 
     void compress(TimeSeries& timeseries, int w_size, int n_window, float bound, std::string output) {
@@ -103,43 +100,63 @@ namespace HybridPCA {
         BinObj* compress_data = new BinObj;
         
         Buffer buffer;
-        while (timeseries.hasNext()) {
-            Univariate<float>* data = (Univariate<float>*) timeseries.next();
-            clock.start();
+        Window* window = new Window;
+        
+        Univariate* d = (Univariate*) timeseries.next();
+        compress_data->put(d->get_time());
+        window->append(d);
 
-            buffer.append(data);
-            if (buffer.get_size() % w_size == 0) {
-                if (buffer.max - buffer.min <= 2 * bound) {
-                    if (buffer.get_size() == w_size*n_window) {
-                        __yield(compress_data, buffer.get_basetime(), buffer.get_size(), (buffer.max + buffer.min) / 2);
+        clock.start();
+        while (timeseries.hasNext()) {
+            Univariate* data = (Univariate*) timeseries.next();
+            window->append(data);
+
+            if (window->size() == w_size) {
+                if (buffer.is_appendable(window, bound)) {
+                    buffer.append(window);
+                    if (buffer.size() == n_window) {
+                        __yield(compress_data, w_size*n_window, (buffer.max+buffer.min)/2);
                         buffer.clear();
                     }
                 }
                 else {
-                    std::vector<Univariate<float>*> window = buffer.pop(w_size);
-                    
-                    if (buffer.get_size() > 0) {
-                        __yield(compress_data, buffer.get_basetime(), buffer.get_size(), (buffer.max + buffer.min) / 2);
+                    if (buffer.size() > 0) {
+                        __yield(compress_data, buffer.size()*w_size, (buffer.max+buffer.min)/2);
                         buffer.clear();
                     }
-                    
-                    buffer.assign(window);
-                    if (buffer.max - buffer.min > 2 * bound) {
-                        __pmc(compress_data, buffer, bound);
-                        buffer.clear();
+
+                    if ((window->max-window->min)>2*bound) {
+                        __pmc(compress_data, window, bound);
+                        delete window;
+                    }
+                    else {
+                        buffer.append(window);
                     }
                 }
+                window = new Window;
             }
 
-            clock.stop();
+            clock.tick();
         }
 
         outputFile.writeBin(compress_data);
         outputFile.close();
         delete compress_data;
 
-        std::cout << std::fixed << "Time taken for each data points: " 
-        << clock.getAvgDuration() << " nanoseconds \n";
+        // Profile average latency
+        std::cout << "Time taken for each data point (ns): " << clock.getAvgDuration() << "\n";
+        IterIO timeFile(output+".time", false);
+        timeFile.write("Time taken for each data point (ns): " + std::to_string(clock.getAvgDuration()));
+        timeFile.close();
+    }
+
+    void __decompress_segment(IterIO& file, int interval, time_t basetime, int length, float value) {
+        for (int i = 0; i < length; i++) {
+            CSVObj obj;
+            obj.pushData(std::to_string(basetime + i * interval));
+            obj.pushData(std::to_string(value));
+            file.write(&obj);
+        }
     }
 
     void decompress(std::string input, std::string output, int interval) {
@@ -147,22 +164,25 @@ namespace HybridPCA {
         IterIO outputFile(output, false);
         BinObj* compress_data = inputFile.readBin();
 
+        time_t basetime = compress_data->getLong();
+        clock.start();
         while (compress_data->getSize() != 0) {
-            clock.start();
-            
-            time_t basetime = compress_data->getLong();
-            int length = compress_data->getInt();
+            unsigned short length = compress_data->getShort();
             float value = compress_data->getFloat();
             __decompress_segment(outputFile, interval, basetime, length, value);
 
-            clock.stop();
+            basetime += length * interval;
+            clock.tick();
         }
 
         delete compress_data;
         inputFile.close();
         outputFile.close();
 
-        std::cout << std::fixed << "Time taken to decompress each segment: " 
-        << clock.getAvgDuration() << " nanoseconds\n";
+        // Profile average latency
+        std::cout << "Time taken for each segment (ns): " << clock.getAvgDuration() << "\n";
+        IterIO timeFile(output+".time", false);
+        timeFile.write("Time taken for each segment (ns): " + std::to_string(clock.getAvgDuration()));
+        timeFile.close();
     }
 };

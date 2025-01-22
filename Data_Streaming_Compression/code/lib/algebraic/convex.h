@@ -2,7 +2,6 @@
 #define ALGEBRAIC_CONVEX_H
 
 #include <vector>
-#include <iostream>
 #include "algebraic/function.h"
 
 class UpperHull {
@@ -19,13 +18,11 @@ class UpperHull {
                 Point2D p2 = this->points.at(size-2);
                 Point2D p3 = this->points.at(size-3);
 
-                Line* line = Line::line(p1, p3);
-                if (line->subs(p2.x) >= p2.y) {
+                Line line = Line::line(p1, p3);
+                if (line.subs(p2.x) >= p2.y) {
                     this->points.erase(this->points.begin()+size-2);
-                    delete line;
                 }
                 else {
-                    delete line;
                     break;
                 }
             }
@@ -52,11 +49,13 @@ class UpperHull {
             this->points.erase(this->points.begin(), this->points.begin() + length);
         }
 
-        void dump() {
+        std::string str() {
+            std::string s = "";
             for (Point2D p : this->points) {
-                std::cout << p.x << "-" << p.y << " ";
+                s += std::to_string(p.x) + "-" + std::to_string(p.y) + " ";
             }
-            std::cout << "\n";
+            
+            return s;
         }
 };
 
@@ -74,13 +73,11 @@ class LowerHull {
                 Point2D p2 = this->points.at(size-2);
                 Point2D p3 = this->points.at(size-3);
 
-                Line* line = Line::line(p1, p3);
-                if (line->subs(p2.x) <= p2.y) {
+                Line line = Line::line(p1, p3);
+                if (line.subs(p2.x) <= p2.y) {
                     this->points.erase(this->points.begin()+size-2);
-                    delete line;
                 }
                 else {
-                    delete line;
                     break;
                 }
             }
@@ -107,11 +104,13 @@ class LowerHull {
             this->points.erase(this->points.begin(), this->points.begin() + length);
         }
 
-        void dump() {
+        std::string str() {
+            std::string s = "";
             for (Point2D p : this->points) {
-                std::cout << p.x << "-" << p.y << " ";
+                s += std::to_string(p.x) + "-" + std::to_string(p.y) + " ";
             }
-            std::cout << "\n";
+            
+            return s;
         }
 };
 

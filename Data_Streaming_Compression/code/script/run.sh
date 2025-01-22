@@ -1,48 +1,58 @@
 #!/bin/bash
 
-FLAG=$(python3 src/python/verify.py "${@:4}")
+# Preprocessing config
+python3 src/python/validate.py $1 > .temp
 
-if [[ $FLAG == 1 ]]; then
-    echo "Algorithm $4 is not supported."
+if [[ $? == 1 ]]; then
+    echo "Algorithm is not supported."
     exit 1
-elif [[ $FLAG == 2 ]]; then
-    echo "Missing required parameter for $4 algorithm."
+elif [[ $? == 2 ]]; then
+    echo "Missing required parameter."
     exit 2
-elif [[ $FLAG == 3 ]]; then
-    echo "Invalid parameter for $4 algorithm."
+elif [[ $? == 3 ]]; then
+    echo "Invalid parameter."
     exit 3
 fi
 
+DATA=$(sed -n "1p" .temp)
+COMPRESS=$(sed -n "2p" .temp)
+DECOMPRESS=$(sed -n "3p" .temp)
+INTERVAL=$(sed -n "4p" .temp)
+ALGO=$(sed -n "5p" .temp)
+
 mkdir -p out/compress
 mkdir -p out/decompress
-
-ALGO=$4
-DATA=$(echo $1 | rev | cut -d '/' -f 2 | rev)
-FILE=$(basename $1 .csv)
-ID=$(uuidgen | cut -c 1-8)
+rm -f .temp
 
 # Compressing phase
-echo "-------------------------"
-echo "Compressing file: $DATA"_"$FILE"_"$ALGO"_"$ID.bin"
-echo "Compressing profile: $DATA"_"$FILE"_"$ALGO"_"$ID.mon"
-touch out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.bin out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon
-
+echo -e "-------------------------"
 echo "Start compressing..."
-bin/compress $1 out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.bin out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon $2 "${@:4}"
-
+echo '' > $COMPRESS
+echo '' > $COMPRESS.mon
+echo '' > $COMPRESS.time
+bin/compress $DATA $COMPRESS $ALGO
 
 # Decompressing phase
 echo -e "\n-------------------------"
-echo "Decompressing file: $DATA"_"$FILE"_"$ALGO"_"$ID.csv"
-echo "Decompressing profile: $DATA"_"$FILE"_"$ALGO"_"$ID.mon"
-touch out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.csv out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon
-
 echo "Start decompressing..."
-bin/decompress out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.bin out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.csv out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon $3 $4 $2
+echo '' > $DECOMPRESS
+echo '' > $DECOMPRESS.mon
+echo '' > $DECOMPRESS.time
+bin/decompress $COMPRESS $DECOMPRESS $INTERVAL $ALGO 
 
 # Statistic phase
 echo -e "\n-------------------------"
 echo "Start statisticizing..."
-python3 src/python/statistics.py $1 out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.csv out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon out/decompress/$DATA"_"$FILE"_"$ALGO"_"$ID.mon out/compress/$DATA"_"$FILE"_"$ALGO"_"$ID.bin
+python3 src/python/statistics.py $DATA $DECOMPRESS $COMPRESS > .statistic
+
+echo -n $DATA,$(echo $ALGO | awk -F " " '{print $1}'),$(echo $ALGO | awk -F " " '{print $2}') >> out/experiments.csv
+cat .statistic | while read line; do
+    echo $line
+    echo -n ,$(echo $line | awk -F ":" '{print $2}' | xargs) >> out/experiments.csv 
+done
+
+echo -n ,$(cat $COMPRESS.time | awk -F ":" '{print $2}' | xargs) >> out/experiments.csv
+echo ,$(cat $DECOMPRESS.time | awk -F ":" '{print $2}' | xargs) >> out/experiments.csv
+rm -f .statistic
 
 exit 0

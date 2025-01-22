@@ -1,0 +1,10 @@
+{
+    "data": "data/Synthesis/p_quadratic.csv",
+    "compress": "out/compress/quadratic_optimal-pla.bin",
+    "decompress": "out/decompress/quadratic_optimal-pla.csv",
+    "interval": 1,
+    "algorithm": {
+        "name": "optimal-pla",
+        "error": 20
+    }
+}

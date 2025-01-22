@@ -5,6 +5,7 @@
 #include <fstream>
 #include <chrono>
 #include <unistd.h>
+#include <thread>
 #include <sys/time.h>
 #include <sys/resource.h>
 
@@ -12,15 +13,20 @@ using namespace std::chrono;
 
 class Monitor {
     private:
-        static bool flag;
-        static long page_size;
-    
-    public:
-        static void monitor(std::string output) {
+        bool flag;
+        long page_size;
+        std::thread task;
+
+        Monitor() {
+            this->flag = false;
+            this->page_size = sysconf(_SC_PAGE_SIZE);
+        }
+
+        void __monitor(std::string output) {
             std::fstream file(output, std::ios::out);
             file << "user_cpu_time,system_cpu_time,vsz,rss\n";
 
-            while (Monitor::flag) {
+            while (this->flag) {
                 // dont know why but monitoring cpu time with ruuage seem more accurate
                 rusage usage;
                 getrusage(RUSAGE_SELF, &usage);  
@@ -34,7 +40,7 @@ class Monitor {
                 
                 // get necessary data
                 ifs >> data; std::string vsz = data;
-                ifs >> data; std::string rss = std::to_string(std::stol(data)*Monitor::page_size);
+                ifs >> data; std::string rss = std::to_string(std::stol(data)*this->page_size);
                 std::string utime = std::to_string(usage.ru_utime.tv_sec*1000000 + usage.ru_utime.tv_usec);
                 std::string stime = std::to_string(usage.ru_stime.tv_sec*1000000 + usage.ru_stime.tv_usec);
 
@@ -43,14 +49,18 @@ class Monitor {
 
             file.close();
         }
-
-        static void start() {
-            Monitor::page_size = sysconf(_SC_PAGE_SIZE);
-            Monitor::flag = true;
+    
+    public:
+        static Monitor instance;
+        
+        void start(std::string output) {
+            this->flag = true;
+            this->task = std::thread(&Monitor::__monitor, this, output);
         }
 
-        static void stop() {
-            Monitor::flag = false;
+        void stop() {
+            this->flag = false;
+            this->task.join();
         }
 
 };
@@ -58,34 +68,31 @@ class Monitor {
 class Clock {
     private:
         int _counter;
-        high_resolution_clock::time_point _clock;
-        double _duration;  // average duration in nano second
+        high_resolution_clock::time_point _pivot;
+        double _avg_duration;  // average duration in nano second
 
     public:
-        Clock() {
-            this->reset();
-        }
-
         void start() {
-            this->_counter += 1;
-            this->_clock = high_resolution_clock::now();
+            this->stop();
+            this->_pivot = high_resolution_clock::now();
         }
 
         // Stop the clock and return duration from start in nanoseconds
-        long stop() {
-            long duration = duration_cast<nanoseconds>(high_resolution_clock::now() - this->_clock).count();
-            this->_duration = ((this->_counter - 1) * this->_duration + duration) / (double) this->_counter;
+        long tick() {
+            this->_counter++;
+            long duration = duration_cast<nanoseconds>(high_resolution_clock::now() - this->_pivot).count();
+            this->_avg_duration = ((this->_counter - 1) * this->_avg_duration + duration) / (double) this->_counter;
             
             return duration;
         }
 
         double getAvgDuration() {
-            return this->_duration;
+            return this->_avg_duration;
         }
 
-        void reset() {
+        void stop() {
             this->_counter = 0;
-            this->_duration = 0;
+            this->_avg_duration = 0;
         }
 };
 

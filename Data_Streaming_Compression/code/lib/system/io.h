@@ -5,7 +5,6 @@
 #include <fstream>
 #include <vector>
 #include <sstream>
-#include <iostream>
 
 using Byte = unsigned char;
 const char HEX[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
@@ -49,6 +48,20 @@ class BinObj : public IOObj {
         Byte getByte() {
             Byte data = this->byte_vector[0];
             this->byte_vector.erase(this->byte_vector.begin());
+            return data;
+        }
+
+        void put(short data) {
+            this->byte_vector.push_back((data >> 8) & 0xff);
+            this->byte_vector.push_back((data >> 0) & 0xff);
+        }
+
+        short getShort() {
+            short data = 0;
+            data += (short) this->byte_vector[0] << 8;
+            data += (short) this->byte_vector[1] << 0;
+
+            this->byte_vector.erase(this->byte_vector.begin(), this->byte_vector.begin() + 2);
             return data;
         }
 
@@ -267,7 +280,14 @@ class IterIO {
             }
         }
 
-        void writeStr(IOObj* obj, bool endline = true) {
+        void write(std::string data, bool endline = true) {
+            this->file << data;
+            if (endline) {
+                this->file << "\n";
+            }
+        }
+
+        void write(IOObj* obj, bool endline = true) {
             this->file << obj->toStr();
             if (endline) {
                 this->file << "\n";

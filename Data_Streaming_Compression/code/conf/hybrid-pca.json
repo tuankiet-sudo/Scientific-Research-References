@@ -1,0 +1,12 @@
+{
+    "data": "data/Synthesis/quadratic.csv",
+    "compress": "out/compress/quadratic_hybrid-pmc.bin",
+    "decompress": "out/decompress/quadratic_hybrid-pmc.csv",
+    "interval": 1,
+    "algorithm": {
+        "name": "hybrid-pca",
+        "error": 20,
+        "w_size": 50,
+        "n_window": 10
+    }
+}

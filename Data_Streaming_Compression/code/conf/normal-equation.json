@@ -1,0 +1,12 @@
+{
+    "data": "data/Synthesis/quadratic.csv",
+    "compress": "out/compress/quadratic_normal-equation.bin",
+    "decompress": "out/decompress/quadratic_normal-equation.csv",
+    "interval": 1,
+    "algorithm": {
+        "name": "normal-equation",
+        "error": 20,
+        "mode": "individual",
+        "degree": 2
+    }
+}

@@ -4,88 +4,78 @@ namespace PMC {
 
     Clock clock;
 
-    void __yield(BinObj* obj, time_t basetime, int length, float value) {
-        obj->put(basetime);
+    void __yield(BinObj* obj, short length, float value) {
         obj->put(length);
         obj->put(value);
     }
 
-    void __decompress_segment(IterIO& file, int interval, time_t basetime, int length, float value) {
-        for (int i=0; i<length; i++) {
-            CSVObj obj;
-            obj.pushData(std::to_string(basetime + i * interval));
-            obj.pushData(std::to_string(value));
-            file.writeStr(&obj);
-        }
-    }
-
     BinObj* __midrange(TimeSeries& timeseries, float bound) {
-        int length = 0;
-        time_t basetime = -1;
-        float min = INFINITY;
-        float max = -INFINITY;
-        float value = 0;
-        
         BinObj* obj = new BinObj;
-        while (timeseries.hasNext()) {
-            Univariate<float>* data = (Univariate<float>*) timeseries.next();
-            clock.start();
 
-            if (basetime == -1) {
-                basetime = data->get_time();
-            }
+        Univariate* d = (Univariate*) timeseries.next();
+        obj->put(d->get_time());
+        float min = d->get_value();
+        float max = d->get_value();
+        float value = d->get_value();
+
+        unsigned short length = 1;
+
+        clock.start();    
+        while (timeseries.hasNext()) {
+            Univariate* data = (Univariate*) timeseries.next();
 
             min = min < data->get_value() ? min : data->get_value();
             max = max > data->get_value() ? max : data->get_value();
             
-            if (max - min > 2 * bound) {
-                __yield(obj, basetime, length, value);
+            if (length > 65000 || max - min > 2 * bound) {
+                __yield(obj, length, value);
                 min = data->get_value();
                 max = data->get_value();
-                basetime = data->get_time();
-                length = 0;
+                value = data->get_value();
+                length = 1;
             }
-            value = (max + min) / 2;
-            
-            length++;
-            clock.stop();
+            else {
+                value = (max + min) / 2;
+                length++;
+            }
+
+            clock.tick();
         }
 
         return obj;
     }
 
     BinObj* __mean(TimeSeries& timeseries, float bound) {
-        int length = 0;
-        time_t basetime = -1;
-        float min = INFINITY;
-        float max = -INFINITY;
-        float value = 0;
-        
         BinObj* obj = new BinObj;
-        while (timeseries.hasNext()) {
-            Univariate<float>* data = (Univariate<float>*) timeseries.next();
-            clock.start();
 
-            if (basetime == -1) {
-                basetime = data->get_time();
-            }
+        Univariate* d = (Univariate*) timeseries.next();
+        obj->put(d->get_time());
+        float min = d->get_value();
+        float max = d->get_value();
+        float value = d->get_value();
+        
+        unsigned short length = 1;
+        clock.start();
+        while (timeseries.hasNext()) {
+            Univariate* data = (Univariate*) timeseries.next();
+            float n_value = (value * length + data->get_value()) / (length+1);
 
             min = min < data->get_value() ? min : data->get_value();
             max = max > data->get_value() ? max : data->get_value();
-            value = (value * length + data->get_value()) / (length+1);
-
-            if (max - value > bound || value - min > bound) {
-                value = (value * (length + 1) - data->get_value()) / (length);
-                __yield(obj, basetime, length, value);
+        
+            if (length > 65000 || max - n_value > bound || n_value - min > bound) {
+                __yield(obj, length, value);
                 min = data->get_value();
                 max = data->get_value();
                 value = data->get_value();
-                length = 0;
-                basetime = data->get_time();
+                length = 1;
             }
-        
-            length++;
-            clock.stop();
+            else {
+                value = n_value;
+                length++;
+            }
+
+            clock.tick();
         }
 
         return obj;
@@ -106,8 +96,20 @@ namespace PMC {
         outputFile.close();
         delete compress_data;
 
-        std::cout << std::fixed << "Time taken for each data points: " 
-        << clock.getAvgDuration() << " nanoseconds \n";
+        // Profile average latency
+        std::cout << "Time taken for each data point (ns): " << clock.getAvgDuration() << "\n";
+        IterIO timeFile(output+".time", false);
+        timeFile.write("Time taken for each data point (ns): " + std::to_string(clock.getAvgDuration()));
+        timeFile.close();
+    }
+
+    void __decompress_segment(IterIO& file, int interval, time_t basetime, int length, float value) {
+        for (int i=0; i<length; i++) {
+            CSVObj obj;
+            obj.pushData(std::to_string(basetime + i * interval));
+            obj.pushData(std::to_string(value));
+            file.write(&obj);
+        }
     }
 
     void decompress(std::string input, std::string output, int interval) {
@@ -115,22 +117,25 @@ namespace PMC {
         IterIO outputFile(output, false);
         BinObj* compress_data = inputFile.readBin();
 
+        time_t basetime = compress_data->getLong();
+        clock.start();
         while (compress_data->getSize() != 0) {
-            clock.start();
-
-            time_t basetime = compress_data->getLong();
-            int length = compress_data->getInt();
+            unsigned short length = compress_data->getShort();
             float value = compress_data->getFloat();
             __decompress_segment(outputFile, interval, basetime, length, value);
 
-            clock.stop();
+            basetime += interval * length;
+            clock.tick();
         }
 
         delete compress_data;
         inputFile.close();
         outputFile.close();
 
-        std::cout << std::fixed << "Time taken to decompress each segment: " 
-        << clock.getAvgDuration() << " nanoseconds\n";
+        // Profile average latency
+        std::cout << "Time taken for each segment (ns): " << clock.getAvgDuration() << "\n";
+        IterIO timeFile(output+".time", false);
+        timeFile.write("Time taken for each segment (ns): " + std::to_string(clock.getAvgDuration()));
+        timeFile.close();
     }
 };

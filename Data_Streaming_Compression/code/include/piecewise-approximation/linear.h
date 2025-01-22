@@ -1,6 +1,9 @@
+#include <map>
+#include <iostream>
+#include <algorithm>
+
 #include "system/io.h"
 #include "system/monitor.h"
-#include "dependencies.h"
 #include "algebraic/function.h"
 #include "algebraic/convex.h"
 #include "timeseries.h"

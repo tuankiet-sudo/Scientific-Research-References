@@ -58,7 +58,7 @@ def mae(origin_data, approx_data):
 
 def maxdiff(origin_data, approx_data):
     index = np.argmax(np.abs(origin_data - approx_data))
-    return np.max(np.abs(origin_data - approx_data)), index, origin_data[index], approx_data[index]
+    return np.max(np.abs(origin_data - approx_data)) # , index, origin_data[index], approx_data[index]
 
 
 def mindiff(origin_data, approx_data):
@@ -70,27 +70,26 @@ def compressratio(origin, approx):
     
 
 if __name__ == "__main__":
-    ORIGIN = sys.argv[1]
-    APPROX = sys.argv[2]
-    C_MONITOR = sys.argv[3]
-    D_MONITOR = sys.argv[4]
-    COMPRESS = sys.argv[5]
+    DATA = sys.argv[1]
+    DECOMPRESS = sys.argv[2]
+    COMPRESS = sys.argv[3]
+    C_MONITOR = COMPRESS + ".mon" 
+    D_MONITOR = DECOMPRESS + ".mon"
     
-    origin_data, approx_data = load(ORIGIN, APPROX)
+    origin_data, approx_data = load(DATA, DECOMPRESS)
     c_data, d_data = load_monitor(C_MONITOR, D_MONITOR)
     count_min = min(origin_data.shape[0], approx_data.shape[0])
     
     origin_data = origin_data[:count_min]
     approx_data = approx_data[:count_min]
     
+    print("Compress Ratio:", compressratio(DATA, COMPRESS))
     print("MSE:", mse(origin_data, approx_data))
     print("RMSE:", rmse(origin_data, approx_data))
-    # print("MAE:", mae(origin_data, approx_data))
-    print("Max Diff:", maxdiff(origin_data, approx_data))
-    print("Min Diff:", mindiff(origin_data, approx_data))
-    print("Compress Ratio:", compressratio(ORIGIN, COMPRESS))
-    # print("c_max_vsz:", np.max(c_data[:,0]))
-    # print("c_max_rss:", np.max(c_data[:,1]))
-    # print("d_max_vsz:", np.max(d_data[:,0]))
-    # print("d_max_rss:", np.max(d_data[:,1]))
-    
+    print("MAE:", mae(origin_data, approx_data))
+    print("Max_E:", maxdiff(origin_data, approx_data))
+    print("Min_E:", mindiff(origin_data, approx_data))
+    print("c_max_vsz:", np.max(c_data[:,0]))
+    print("c_max_rss:", np.max(c_data[:,1]))
+    print("d_max_vsz:", np.max(d_data[:,0]))
+    print("d_max_rss:", np.max(d_data[:,1]))

@@ -1,6 +1,7 @@
+#include <iostream>
+
 #include "system/io.h"
 #include "system/monitor.h"
-#include "dependencies.h"
 #include "algebraic/function.h"
 #include "timeseries.h"
 
