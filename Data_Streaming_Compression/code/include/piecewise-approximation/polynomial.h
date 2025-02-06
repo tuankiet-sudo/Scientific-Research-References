@@ -1,11 +1,11 @@
 #include <map>
 #include <iostream>
 
-#include "system/io.h"
-#include "system/monitor.h"
-#include "algebraic/function.h"
-#include "algebraic/matrix.h"
-#include "timeseries.h"
+#include "system/io.hpp"
+#include "system/monitor.hpp"
+#include "algebraic/function.hpp"
+#include "algebraic/matrix.hpp"
+#include "timeseries.hpp"
 
 
 namespace NormalEquation {

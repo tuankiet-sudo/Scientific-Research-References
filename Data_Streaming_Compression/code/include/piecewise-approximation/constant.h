@@ -1,9 +1,9 @@
 #include <iostream>
 
-#include "system/io.h"
-#include "system/monitor.h"
-#include "algebraic/function.h"
-#include "timeseries.h"
+#include "system/io.hpp"
+#include "system/monitor.hpp"
+#include "algebraic/function.hpp"
+#include "timeseries.hpp"
 
 
 namespace PMC {

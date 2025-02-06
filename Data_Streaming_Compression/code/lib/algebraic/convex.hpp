@@ -2,7 +2,7 @@
 #define ALGEBRAIC_CONVEX_H
 
 #include <vector>
-#include "algebraic/function.h"
+#include "algebraic/function.hpp"
 
 class UpperHull {
     private:
