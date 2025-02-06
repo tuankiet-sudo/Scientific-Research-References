@@ -243,7 +243,6 @@ namespace MixPiece {
         float b_1 = floor(d->get_value() / bound) * bound;
         float b_2 = ceil(d->get_value() / bound) * bound;
         
-        
         unsigned int index = 1; int length = 1; int count = 0;
         int flag = 0; bool floor_flag = true; bool ceil_flag = true;
         float slp_u_1 = INFINITY; float slp_u_2 = INFINITY;

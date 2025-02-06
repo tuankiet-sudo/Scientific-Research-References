@@ -33,10 +33,6 @@ class UpperHull {
             return this->points.at(i);
         }
 
-        Point2D get_highest() {
-            return this->points.at(this->points.size()-1);
-        }
-
         int size() {
             return this->points.size();
         }
@@ -47,15 +43,6 @@ class UpperHull {
 
         void erase_from_begin(int length) {
             this->points.erase(this->points.begin(), this->points.begin() + length);
-        }
-
-        std::string str() {
-            std::string s = "";
-            for (Point2D p : this->points) {
-                s += std::to_string(p.x) + "-" + std::to_string(p.y) + " ";
-            }
-            
-            return s;
         }
 };
 
@@ -88,10 +75,6 @@ class LowerHull {
             return this->points.at(i);
         }
 
-        Point2D get_lowest() {
-            return this->points.at(this->points.size()-1);
-        }
-
         int size() {
             return this->points.size();
         }
@@ -103,14 +86,35 @@ class LowerHull {
         void erase_from_begin(int length) {
             this->points.erase(this->points.begin(), this->points.begin() + length);
         }
+};
 
-        std::string str() {
-            std::string s = "";
-            for (Point2D p : this->points) {
-                s += std::to_string(p.x) + "-" + std::to_string(p.y) + " ";
+class ConvexHull {
+    private:
+        LowerHull lower;
+        UpperHull upper;
+
+    public:
+        void append(Point2D point) {
+            this->lower.append(point);
+            this->upper.append(point);
+        }
+
+        Point2D at(int i) {
+            if (i < this->lower.size()) {
+                return this->lower.at(i);
             }
-            
-            return s;
+            else {
+                return this->upper.at(i-this->lower.size()+1);
+            }
+        }
+
+        int size() {
+            return this->lower.size() + this->upper.size() - 2;
+        }
+
+        void clear() {
+            this->upper.clear();
+            this->lower.clear();
         }
 };
 

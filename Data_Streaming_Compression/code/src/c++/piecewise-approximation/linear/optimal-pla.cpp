@@ -36,6 +36,7 @@ namespace OptimalPLA {
             }
             else {
                 if (length > 65000 || l_line.subs(p.x) > p.y + bound || p.y - bound > u_line.subs(p.x)) {
+                    std::cout << u_line.get_slope() << " " << l_line.get_slope() << "\n";
                     __yield(compress_data, length, (u_line.get_slope()+l_line.get_slope())/2, (u_line.get_intercept()+l_line.get_intercept())/2);
 
                     p1 = Point2D(0, p.y);

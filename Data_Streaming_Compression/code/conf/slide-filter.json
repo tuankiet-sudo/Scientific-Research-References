@@ -1,0 +1,10 @@
+{
+    "data": "data/Synthesis/quadratic.csv",
+    "compress": "out/compress/quadratic_slide-filter.bin",
+    "decompress": "out/decompress/quadratic_slide-filter.csv",
+    "interval": 1,
+    "algorithm": {
+        "name": "slide-filter",
+        "error": 20
+    }
+}
