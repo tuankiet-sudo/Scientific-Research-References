@@ -1,5 +1,5 @@
-#ifndef SYSTEM_IO_H
-#define SYSTEM_IO_H
+#ifndef SYSTEM_IO_HPP
+#define SYSTEM_IO_HPP
 
 #include <string>
 #include <fstream>

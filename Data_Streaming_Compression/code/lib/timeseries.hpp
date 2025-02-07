@@ -1,5 +1,5 @@
-#ifndef TIMESERIES_H
-#define TIMESERIES_H
+#ifndef TIMESERIES_HPP
+#define TIMESERIES_HPP
 
 #include <vector>
 

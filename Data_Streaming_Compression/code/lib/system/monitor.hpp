@@ -1,5 +1,5 @@
-#ifndef SYSTEM_MONITOR_H
-#define SYSTEM_MONITOR_H
+#ifndef SYSTEM_MONITOR_HPP
+#define SYSTEM_MONITOR_HPP
 
 #include <string>
 #include <fstream>

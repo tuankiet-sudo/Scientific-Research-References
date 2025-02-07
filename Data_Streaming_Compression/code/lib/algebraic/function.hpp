@@ -1,5 +1,5 @@
-#ifndef ALGEBRAIC_FUNCTION_H
-#define ALGEBRAIC_FUNCTION_H
+#ifndef ALGEBRAIC_FUNCTION_HPP
+#define ALGEBRAIC_FUNCTION_HPP
 
 #include <string>
 #include <cmath>

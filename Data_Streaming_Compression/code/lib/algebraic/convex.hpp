@@ -1,5 +1,5 @@
-#ifndef ALGEBRAIC_CONVEX_H
-#define ALGEBRAIC_CONVEX_H
+#ifndef ALGEBRAIC_CONVEX_HPP
+#define ALGEBRAIC_CONVEX_HPP
 
 #include <vector>
 #include "algebraic/function.hpp"

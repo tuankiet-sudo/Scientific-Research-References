@@ -1,5 +1,5 @@
-#ifndef ALGEBRAIC_MATRIX_H
-#define ALGEBRAIC_MATRIX_H
+#ifndef ALGEBRAIC_MATRIX_HPP
+#define ALGEBRAIC_MATRIX_HPP
 
 #include <string>
 #include <iostream>
