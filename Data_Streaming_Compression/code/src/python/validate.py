@@ -40,7 +40,11 @@ def validate(algo):
     elif algo["name"] == "mix-piece":
         if "error" not in algo or "n_segment" not in algo: 
             exit(Error.MISSING_PARAM.value)
-        
+    
+    elif algo["name"] == "smart-grid-compression":
+        if "error" not in algo or "degree" not in algo:
+            exit(Error.MISSING_PARAM.value)
+
     else:
         exit(Error.INVALID_ALGO.value)
     
@@ -66,6 +70,8 @@ def parse(conf):
         print("{} {}".format(algo["name"], algo["error"]))
     elif algo["name"] == "mix-piece":
         print("{} {} {}".format(algo["name"], algo["error"], algo["n_segment"]))
+    elif algo["name"] == "smart-grid-compression":
+        print("{} {} {}".format(algo["name"], algo["error"], algo["degree"]))
         
 
     

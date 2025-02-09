@@ -1,4 +1,4 @@
-#include "piecewise-approximation/constant.h"
+#include "piecewise-approximation/constant.hpp"
 
 namespace PMC {
 
@@ -97,7 +97,7 @@ namespace PMC {
         delete compress_data;
 
         // Profile average latency
-        std::cout << "Time taken for each data point (ns): " << clock.getAvgDuration() << "\n";
+        std::cout << std::fixed << "Time taken for each data point (ns): " << clock.getAvgDuration() << "\n";
         IterIO timeFile(output+".time", false);
         timeFile.write("Time taken for each data point (ns): " + std::to_string(clock.getAvgDuration()));
         timeFile.close();
@@ -133,7 +133,7 @@ namespace PMC {
         outputFile.close();
 
         // Profile average latency
-        std::cout << "Time taken for each segment (ns): " << clock.getAvgDuration() << "\n";
+        std::cout << std::fixed << "Time taken for each segment (ns): " << clock.getAvgDuration() << "\n";
         IterIO timeFile(output+".time", false);
         timeFile.write("Time taken for each segment (ns): " + std::to_string(clock.getAvgDuration()));
         timeFile.close();

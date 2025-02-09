@@ -1,6 +1,7 @@
-#include "piecewise-approximation/constant.h"
-#include "piecewise-approximation/linear.h"
-#include "piecewise-approximation/polynomial.h"
+#include "piecewise-approximation/constant.hpp"
+#include "piecewise-approximation/linear.hpp"
+#include "piecewise-approximation/polynomial.hpp"
+#include "model-selection.hpp"
 
 using namespace std;
 
@@ -54,6 +55,9 @@ int main(int argc, char** argv) {
     }
     else if (ALGO == "mix-piece") {
         MixPiece::compress(timeseries, atoi(argv[5]), ERROR, OUTPUT);
+    }
+    else if (ALGO == "smart-grid-compression") {
+        SmartGridCompression::compress(timeseries, atoi(argv[5]), ERROR, OUTPUT);
     }
 
     timeseries.finalize();
