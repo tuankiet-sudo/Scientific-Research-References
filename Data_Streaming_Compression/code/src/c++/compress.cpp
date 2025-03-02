@@ -1,7 +1,7 @@
 #include "piecewise-approximation/constant.hpp"
 #include "piecewise-approximation/linear.hpp"
 #include "piecewise-approximation/polynomial.hpp"
-#include "model-selection.hpp"
+#include "model-selection/polynomial.hpp"
 
 using namespace std;
 
@@ -58,6 +58,12 @@ int main(int argc, char** argv) {
     }
     else if (ALGO == "smart-grid-compression") {
         SmartGridCompression::compress(timeseries, atoi(argv[5]), ERROR, OUTPUT);
+    }
+    else if (ALGO == "unbounded") {
+        Unbounded::compress(timeseries, ERROR, OUTPUT);
+    }
+    else if (ALGO == "bounded") {
+        Bounded::compress(timeseries, ERROR, OUTPUT);
     }
 
     timeseries.finalize();

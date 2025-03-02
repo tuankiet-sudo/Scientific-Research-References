@@ -1,7 +1,7 @@
 #include "piecewise-approximation/constant.hpp"
 #include "piecewise-approximation/linear.hpp"
 #include "piecewise-approximation/polynomial.hpp"
-#include "model-selection.hpp"
+#include "model-selection/polynomial.hpp"
 
 
 using namespace std;
@@ -39,6 +39,12 @@ int main(int argc, char** argv) {
     }
     else if (ALGO == "smart-grid-compression") {
         SmartGridCompression::decompress(INPUT, OUTPUT, INTERVAL);
+    }
+    else if (ALGO == "unbounded") {
+        Unbounded::decompress(INPUT, OUTPUT, INTERVAL);
+    }
+    else if (ALGO == "bounded") {
+        Bounded::decompress(INPUT, OUTPUT, INTERVAL);
     }
 
     Monitor::instance.stop();

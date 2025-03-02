@@ -1,0 +1,10 @@
+{
+    "data": "data/Synthesis/quadratic.csv",
+    "compress": "out/compress/quadratic_bounded.bin",
+    "decompress": "out/decompress/quadratic_bounded.csv",
+    "interval": 1,
+    "algorithm": {
+        "name": "bounded",
+        "error": 20
+    }
+}

@@ -1,4 +1,4 @@
-#include "model-selection.hpp"
+#include "model-selection/polynomial.hpp"
 
 namespace SmartGridCompression {
 

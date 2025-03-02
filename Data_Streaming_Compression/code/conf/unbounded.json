@@ -1,0 +1,10 @@
+{
+    "data": "data/Synthesis/quadratic.csv",
+    "compress": "out/compress/quadratic_unbounded.bin",
+    "decompress": "out/decompress/quadratic_unbounded.csv",
+    "interval": 1,
+    "algorithm": {
+        "name": "unbounded",
+        "error": 20
+    }
+}
