@@ -41,7 +41,7 @@ namespace SwingFilter {
         Line l_line = Line::line(p1, Point2D(p2.x, p2.y-bound));
 
         unsigned short length = 2;
-        std::vector<Point2D> segment = {p1, p2}
+        std::vector<Point2D> segment = {p1, p2};
         while (timeseries.hasNext()) {
             Point2D p(length, ((Univariate*) timeseries.next())->get_value());
 
