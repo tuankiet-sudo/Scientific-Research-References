@@ -235,6 +235,7 @@ namespace MixPiece {
     }
     
     void compress(TimeSeries& timeseries, int n_segment, float bound, std::string output) {
+        clock.start();
         IterIO outputFile(output, false);
         BinObj* compress_data = new BinObj;
 
@@ -249,7 +250,6 @@ namespace MixPiece {
         float slp_l_1 = -INFINITY; float slp_l_2 = -INFINITY;
         
         std::map<float, std::vector<Interval>> b_intervals;
-        clock.start();
         while (timeseries.hasNext()) {
             Point2D p(length, ((Univariate*) timeseries.next())->get_value());
 
@@ -306,7 +306,6 @@ namespace MixPiece {
             
             index++;
             length++;
-            // clock.tick();
         }
 
         if (flag > 0) {
@@ -320,21 +319,20 @@ namespace MixPiece {
             b_intervals[b_2] = vec;
         }
 
-        clock.tick();
-
         __group(compress_data, b_intervals);
-        b_intervals.clear();
-        
-        
+        b_intervals.clear();        
 
         outputFile.writeBin(compress_data);
         outputFile.close();
         delete compress_data;
 
+        clock.tick();
+        double avg_time = clock.getAvgDuration() / timeseries.size();
+
         // Profile average latency
-        std::cout << std::fixed << "Time taken for each data point (ns): " << clock.getAvgDuration() << "\n";
+        std::cout << std::fixed << "Time taken for each data point (ns): " << avg_time << "\n";
         IterIO timeFile(output+".time", false);
-        timeFile.write("Time taken for each data point (ns): " + std::to_string(clock.getAvgDuration()));
+        timeFile.write("Time taken for each data point (ns): " + std::to_string(avg_time));
         timeFile.close();
     }
 

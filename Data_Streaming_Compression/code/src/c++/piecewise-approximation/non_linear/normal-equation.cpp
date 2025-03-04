@@ -100,6 +100,7 @@ namespace NormalEquation {
     }
 
     void compress(TimeSeries& timeseries, std::string mode, int degree, float bound, std::string output) {
+        clock.start();
         IterIO outputFile(output, false);
         BinObj* compress_data = new BinObj;
         
@@ -112,7 +113,6 @@ namespace NormalEquation {
         Model* n_model = nullptr;
 
         unsigned short length = 1;
-        clock.start();
         while (timeseries.hasNext()) {
             Univariate* data = (Univariate*) timeseries.next();
             window.push_back(Point2D(window.size(), data->get_value()));
@@ -139,7 +139,6 @@ namespace NormalEquation {
             }
 
             length++;
-            clock.tick();
         }
 
         for (auto& entry : cache) delete entry.second;
@@ -147,10 +146,13 @@ namespace NormalEquation {
         outputFile.close();
         delete compress_data;
 
+        clock.tick();
+        double avg_time = clock.getAvgDuration() / timeseries.size();
+
         // Profile average latency
-        std::cout << std::fixed << "Time taken for each data point (ns): " << clock.getAvgDuration() << "\n";
+        std::cout << std::fixed << "Time taken for each data point (ns): " << avg_time << "\n";
         IterIO timeFile(output+".time", false);
-        timeFile.write("Time taken for each data point (ns): " + std::to_string(clock.getAvgDuration()));
+        timeFile.write("Time taken for each data point (ns): " + std::to_string(avg_time));
         timeFile.close();
     }
 

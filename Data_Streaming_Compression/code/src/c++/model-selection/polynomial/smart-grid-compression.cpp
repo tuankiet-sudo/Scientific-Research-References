@@ -407,7 +407,6 @@ namespace SmartGridCompression {
             }
         }
 
-        // clock.tick();
         return success;
     }
 
@@ -427,6 +426,7 @@ namespace SmartGridCompression {
     }
 
     void compress(TimeSeries& timeseries, int degree, float bound, std::string output) {
+        clock.start();
         IterIO outputFile(output, false);
         BinObj* compress_data = new BinObj;
 
@@ -442,7 +442,6 @@ namespace SmartGridCompression {
             else models.push_back(new PolynomialModel(i));
         }
 
-        clock.start();
         while (!segment.empty() || timeseries.hasNext()) {
             if (timeseries.hasNext()) {
                 Point2D p(segment.size(), ((Univariate*) timeseries.next())->get_value());
@@ -475,7 +474,6 @@ namespace SmartGridCompression {
                 }                
             }
         }
-        clock.tick();
 
         for (int i=0; i<=degree; i++) {
             delete models[i];
@@ -485,10 +483,13 @@ namespace SmartGridCompression {
         outputFile.close();
         delete compress_data;
         
+        clock.tick();
+        double avg_time = clock.getAvgDuration() / timeseries.size();
+
         // Profile average latency
-        std::cout << std::fixed << "Time taken for each data point (ns): " << clock.getAvgDuration() << "\n";
+        std::cout << std::fixed << "Time taken for each data point (ns): " << avg_time << "\n";
         IterIO timeFile(output+".time", false);
-        timeFile.write("Time taken for each data point (ns): " + std::to_string(clock.getAvgDuration()));
+        timeFile.write("Time taken for each data point (ns): " + std::to_string(avg_time));
         timeFile.close();
     }
 

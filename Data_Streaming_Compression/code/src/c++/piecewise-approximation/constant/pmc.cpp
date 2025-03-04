@@ -38,8 +38,6 @@ namespace PMC {
                 value = (max + min) / 2;
                 length++;
             }
-
-            clock.tick();
         }
 
         return obj;
@@ -74,14 +72,13 @@ namespace PMC {
                 value = n_value;
                 length++;
             }
-
-            clock.tick();
         }
 
         return obj;
     }
 
     void compress(TimeSeries& timeseries, std::string mode, float bound, std::string output) {
+        clock.start();
         BinObj* compress_data = nullptr;
         IterIO outputFile(output, false);
 
@@ -96,10 +93,13 @@ namespace PMC {
         outputFile.close();
         delete compress_data;
 
+        clock.tick();
+        double avg_time = clock.getAvgDuration() / timeseries.size();
+
         // Profile average latency
-        std::cout << std::fixed << "Time taken for each data point (ns): " << clock.getAvgDuration() << "\n";
+        std::cout << std::fixed << "Time taken for each data point (ns): " << avg_time << "\n";
         IterIO timeFile(output+".time", false);
-        timeFile.write("Time taken for each data point (ns): " + std::to_string(clock.getAvgDuration()));
+        timeFile.write("Time taken for each data point (ns): " + std::to_string(avg_time));
         timeFile.close();
     }
 

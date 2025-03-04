@@ -84,6 +84,7 @@ namespace SlideFilter {
     }
 
     void compress(TimeSeries& timeseries, float bound, std::string output) {
+        clock.start();
         IterIO outputFile(output, false);
         BinObj* compress_data = new BinObj;
 
@@ -102,7 +103,6 @@ namespace SlideFilter {
         std::vector<Point2D> segment = {p1, p2};
         long index = 2;
         bool first = true;
-        clock.start();
         while (timeseries.hasNext()) {
             Point2D p(index, ((Univariate*) timeseries.next())->get_value());
             
@@ -179,18 +179,19 @@ namespace SlideFilter {
                 index++;
                 segment.push_back(p);
             }
-
-            clock.tick();
         }
 
         outputFile.writeBin(compress_data);
         outputFile.close();
         delete compress_data;
         
+        clock.tick();
+        double avg_time = clock.getAvgDuration() / timeseries.size();
+
         // Profile average latency
-        std::cout << std::fixed << "Time taken for each data point (ns): " << clock.getAvgDuration() << "\n";
+        std::cout << std::fixed << "Time taken for each data point (ns): " << avg_time << "\n";
         IterIO timeFile(output+".time", false);
-        timeFile.write("Time taken for each data point (ns): " + std::to_string(clock.getAvgDuration()));
+        timeFile.write("Time taken for each data point (ns): " + std::to_string(avg_time));
         timeFile.close();
     }
 

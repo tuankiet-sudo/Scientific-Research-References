@@ -52,6 +52,10 @@ class TimeSeries {
             this->_index = 0;
         }
 
+        int size() {
+            return this->series.size();
+        }
+
         void finalize() {
             for (Data* data : this->series) {
                 delete data;

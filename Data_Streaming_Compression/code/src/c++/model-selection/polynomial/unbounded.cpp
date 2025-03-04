@@ -509,6 +509,7 @@ namespace Unbounded {
     // }
 
     void compress(TimeSeries& timeseries, float bound, std::string output) {
+        clock.start();
         IterIO outputFile(output, false);
         BinObj* compress_data = new BinObj;
 
@@ -525,7 +526,6 @@ namespace Unbounded {
         int degree = 1; int direction = 0; // -1 decrease, 1 increase
         int index = 0; bool flag = false; int scenario = -1;
 
-        clock.start();
         while (!buffer.empty()) {
             if (timeseries.hasNext()) {
                 buffer.push_back(((Univariate*) timeseries.next())->get_value());
@@ -636,7 +636,6 @@ namespace Unbounded {
             segment.push_back(p);
             
         }
-        clock.tick();
 
         delete l_1; delete l_2;
 
@@ -644,10 +643,13 @@ namespace Unbounded {
         outputFile.close();
         delete compress_data;
         
+        clock.tick();
+        double avg_time = clock.getAvgDuration() / timeseries.size();
+
         // Profile average latency
-        std::cout << std::fixed << "Time taken for each data point (ns): " << clock.getAvgDuration() << "\n";
+        std::cout << std::fixed << "Time taken for each data point (ns): " << avg_time << "\n";
         IterIO timeFile(output+".time", false);
-        timeFile.write("Time taken for each data point (ns): " + std::to_string(clock.getAvgDuration()));
+        timeFile.write("Time taken for each data point (ns): " + std::to_string(avg_time));
         timeFile.close();
     }
 

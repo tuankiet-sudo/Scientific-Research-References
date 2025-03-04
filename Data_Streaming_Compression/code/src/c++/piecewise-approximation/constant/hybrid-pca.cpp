@@ -96,6 +96,7 @@ namespace HybridPCA {
     }
 
     void compress(TimeSeries& timeseries, int w_size, int n_window, float bound, std::string output) {
+        clock.start();
         IterIO outputFile(output, false);
         BinObj* compress_data = new BinObj;
         
@@ -135,18 +136,19 @@ namespace HybridPCA {
                 }
                 window = new Window;
             }
-
-            clock.tick();
         }
 
         outputFile.writeBin(compress_data);
         outputFile.close();
         delete compress_data;
 
+        clock.tick();
+        double avg_time = clock.getAvgDuration() / timeseries.size();
+
         // Profile average latency
-        std::cout << std::fixed << "Time taken for each data point (ns): " << clock.getAvgDuration() << "\n";
+        std::cout << std::fixed << "Time taken for each data point (ns): " << avg_time << "\n";
         IterIO timeFile(output+".time", false);
-        timeFile.write("Time taken for each data point (ns): " + std::to_string(clock.getAvgDuration()));
+        timeFile.write("Time taken for each data point (ns): " + std::to_string(avg_time));
         timeFile.close();
     }
 

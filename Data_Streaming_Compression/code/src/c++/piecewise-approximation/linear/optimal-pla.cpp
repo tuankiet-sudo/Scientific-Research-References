@@ -11,6 +11,7 @@ namespace OptimalPLA {
     }
 
     void compress(TimeSeries& timeseries, float bound, std::string output) {
+        clock.start();
         IterIO outputFile(output, false);
         BinObj* compress_data = new BinObj;
 
@@ -24,7 +25,6 @@ namespace OptimalPLA {
         l_cvx.append(Point2D(0, p1.y+bound));
         
         unsigned short length = 1;
-        clock.start();
         while (timeseries.hasNext()) {
             Point2D p(length, ((Univariate*) timeseries.next())->get_value());
 
@@ -83,19 +83,19 @@ namespace OptimalPLA {
             }
 
             length++;
-            // clock.tick();
         }
-
-        clock.tick();
 
         outputFile.writeBin(compress_data);
         outputFile.close();
         delete compress_data;
 
+        clock.tick();
+        double avg_time = clock.getAvgDuration() / timeseries.size();
+
         // Profile average latency
-        std::cout << std::fixed << "Time taken for each data point (ns): " << clock.getAvgDuration() << "\n";
+        std::cout << std::fixed << "Time taken for each data point (ns): " << avg_time << "\n";
         IterIO timeFile(output+".time", false);
-        timeFile.write("Time taken for each data point (ns): " + std::to_string(clock.getAvgDuration()));
+        timeFile.write("Time taken for each data point (ns): " + std::to_string(avg_time));
         timeFile.close();
     }
 
@@ -123,7 +123,7 @@ namespace OptimalPLA {
             __decompress_segment(outputFile, interval, basetime, length, slope, intercept);
             
             basetime += length * interval;
-            clock.stop();
+            clock.tick();
         }
 
         delete compress_data;
