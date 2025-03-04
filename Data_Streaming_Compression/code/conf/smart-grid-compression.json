@@ -1,11 +1,11 @@
 {
-    "data": "data/Synthesis/quadratic.csv",
+    "data": "data/UCR-time-series/fungi.csv",
     "compress": "out/compress/quadratic_smart-grid-compression.bin",
     "decompress": "out/decompress/quadratic_smart-grid-compression.csv",
     "interval": 1,
     "algorithm": {
         "name": "smart-grid-compression",
-        "error": 20,
-        "degree": 1
+        "error": 4.355,
+        "degree": 3
     }
 }

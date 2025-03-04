@@ -407,7 +407,7 @@ namespace SmartGridCompression {
             }
         }
 
-        clock.tick();
+        // clock.tick();
         return success;
     }
 
@@ -475,6 +475,7 @@ namespace SmartGridCompression {
                 }                
             }
         }
+        clock.tick();
 
         for (int i=0; i<=degree; i++) {
             delete models[i];

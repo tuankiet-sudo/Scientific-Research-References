@@ -1,11 +1,11 @@
 {
-    "data": "data/Synthesis/quadratic.csv",
+    "data": "data/UCR-time-series/crop.csv",
     "compress": "out/compress/quadratic_mix-piece.bin",
     "decompress": "out/decompress/quadratic_mix-piece.csv",
     "interval": 1,
     "algorithm": {
         "name": "mix-piece",
-        "error": 20,
-        "n_segment": 100000
+        "error": 0.10325,
+        "n_segment": 10000000
     }
 }

@@ -83,8 +83,10 @@ namespace OptimalPLA {
             }
 
             length++;
-            clock.tick();
+            // clock.tick();
         }
+
+        clock.tick();
 
         outputFile.writeBin(compress_data);
         outputFile.close();

@@ -38,7 +38,7 @@ echo "Start decompressing..."
 echo '' > $DECOMPRESS
 echo '' > $DECOMPRESS.mon
 echo '' > $DECOMPRESS.time
-bin/decompress $COMPRESS $DECOMPRESS $INTERVAL $ALGO 
+bin/decompress $COMPRESS $DECOMPRESS $INTERVAL $ALGO
 
 # Statistic phase
 echo -e "\n-------------------------"

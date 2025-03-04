@@ -8,9 +8,9 @@ namespace MixPiece {
     struct Interval {
         float a_u;
         float a_l;
-        unsigned int t;
+        long t;
 
-        Interval(float a_u, float a_l, int t) {
+        Interval(float a_u, float a_l, long t) {
             this->a_u = a_u;
             this->a_l = a_l;
             this->t = t;
@@ -22,14 +22,14 @@ namespace MixPiece {
         struct Block {
             float a_u;
             float a_l;
-            std::vector<unsigned int> t;
+            std::vector<long> t;
 
             Block() {
                 this->a_u = INFINITY;
                 this->a_l = -INFINITY;
             }
 
-            Block(float a_u, float a_l, int t) {
+            Block(float a_u, float a_l, long t) {
                 this->a_u = a_u;
                 this->a_l = a_l;
                 this->t.push_back(t);
@@ -44,7 +44,7 @@ namespace MixPiece {
             this->blocks.push_back(Block());
         }
 
-        B_Block(float b, float a_u, float a_l, int t) {
+        B_Block(float b, float a_u, float a_l, long t) {
             this->b = b;
             this->blocks.push_back(Block(a_u, a_l, t));
         }
@@ -53,7 +53,7 @@ namespace MixPiece {
             return a_l <= this->blocks.back().a_u && a_u >= this->blocks.back().a_l;
         }
 
-        void intersect(float a_u, float a_l, int t) {
+        void intersect(float a_u, float a_l, long t) {
             if (this->blocks.back().a_u > a_u) this->blocks.back().a_u = a_u;
             if (this->blocks.back().a_l < a_l) this->blocks.back().a_l = a_l;
 
@@ -65,9 +65,9 @@ namespace MixPiece {
 
         struct Block {
             float b;
-            unsigned int t;
+            long t;
 
-            Block(float b, int t) {
+            Block(float b, long t) {
                 this->b = b;
                 this->t = t;
             }
@@ -82,7 +82,7 @@ namespace MixPiece {
             this->a_l = -INFINITY;
         }
 
-        A_Block(float b, float a_u, float a_l, int t) {
+        A_Block(float b, float a_u, float a_l, long t) {
             this->a_u = a_u;
             this->a_l = a_l;
 
@@ -93,7 +93,7 @@ namespace MixPiece {
             return a_l <= this->a_u && a_u >= this->a_l;
         } 
 
-        void intersect(float b, float a_u, float a_l, int t) {
+        void intersect(float b, float a_u, float a_l, long t) {
             if (this->a_u > a_u) this->a_u = a_u;
             if (this->a_l < a_l) this->a_l = a_l;
 
@@ -105,9 +105,9 @@ namespace MixPiece {
         float a_u;
         float a_l;
         float b;
-        unsigned int t;
+        long t;
 
-        R_Block(float b, float a_u, float a_l, int t) {
+        R_Block(float b, float a_u, float a_l, long t) {
             this->b = b;
             this->a_u = a_u;
             this->a_l = a_l;
@@ -134,7 +134,7 @@ namespace MixPiece {
                 obj->put((int) block.t.size());
 
                 for (int i=0; i<block.t.size(); i++) {
-                    obj->put((int) block.t[i]);
+                    obj->put(block.t[i]);
                 }
             }
         }
@@ -149,7 +149,7 @@ namespace MixPiece {
 
             for (A_Block::Block block : a_block.blocks) {
                 obj->put(block.b);
-                obj->put((int) block.t);
+                obj->put(block.t);
             }
         }
     }
@@ -159,7 +159,7 @@ namespace MixPiece {
         for (R_Block block : r_blocks) {
             obj->put(block.a());
             obj->put(block.b);
-            obj->put((int) block.t);
+            obj->put(block.t);
         }
     }
 
@@ -243,7 +243,7 @@ namespace MixPiece {
         float b_1 = floor(d->get_value() / bound) * bound;
         float b_2 = ceil(d->get_value() / bound) * bound;
         
-        unsigned int index = 1; int length = 1; int count = 0;
+        long index = 1; long length = 1; int count = 0;
         int flag = 0; bool floor_flag = true; bool ceil_flag = true;
         float slp_u_1 = INFINITY; float slp_u_2 = INFINITY;
         float slp_l_1 = -INFINITY; float slp_l_2 = -INFINITY;
@@ -306,7 +306,7 @@ namespace MixPiece {
             
             index++;
             length++;
-            clock.tick();
+            // clock.tick();
         }
 
         if (flag > 0) {
@@ -320,9 +320,13 @@ namespace MixPiece {
             b_intervals[b_2] = vec;
         }
 
+        clock.tick();
+
         __group(compress_data, b_intervals);
         b_intervals.clear();
         
+        
+
         outputFile.writeBin(compress_data);
         outputFile.close();
         delete compress_data;
@@ -337,16 +341,16 @@ namespace MixPiece {
     struct Segment {
         float b;
         float a;
-        unsigned int t;
+        long t;
 
-        Segment(float b, float a, int t) {
+        Segment(float b, float a, long t) {
             this->b = b;
             this->a = a;
             this->t = t;
         }
     };
 
-    void __decompress_segment(IterIO& file, int interval, time_t basetime, unsigned int start, Segment& segment) {                
+    void __decompress_segment(IterIO& file, int interval, time_t basetime, long start, Segment& segment) {                
         int i = 0;
         while (start++ <= segment.t) {
             CSVObj obj;
@@ -365,7 +369,7 @@ namespace MixPiece {
         std::vector<Segment> segments;
         clock.start();
         while (compress_data->getSize() != 0) {
-            unsigned int start = 0;
+            long start = 0;
 
             // Decompress part 1
             int b_blocks = compress_data->getInt();
@@ -376,7 +380,7 @@ namespace MixPiece {
                     float a = compress_data->getFloat();
                     int blocks = compress_data->getInt();
                     while (blocks-- > 0) {
-                        unsigned int time = compress_data->getInt();
+                        long time = compress_data->getLong();
                         segments.push_back(Segment(b, a, time));
                     }
                 }
@@ -389,7 +393,7 @@ namespace MixPiece {
                 int blocks = compress_data->getInt();
                 while (blocks-- > 0) {
                     float b = compress_data->getFloat();
-                    unsigned int time = compress_data->getInt();
+                    long time = compress_data->getLong();
                     segments.push_back(Segment(b, a, time));
                 }
             }
@@ -399,7 +403,7 @@ namespace MixPiece {
             while (blocks-- > 0) {
                 float a = compress_data->getFloat();
                 float b = compress_data->getFloat();
-                unsigned int time = compress_data->getInt();
+                long time = compress_data->getLong();
                 segments.push_back(Segment(b, a, time));
             }
 
