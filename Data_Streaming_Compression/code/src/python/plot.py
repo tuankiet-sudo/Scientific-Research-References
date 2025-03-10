@@ -4,6 +4,7 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 
+ERROR = 4.355
 
 def load(file, index):
     data = []
@@ -15,7 +16,7 @@ def load(file, index):
             time.append(int(line[0]))
             data.append(float(line[index]))
         
-    return np.array(time[:200]), np.array(data[:200])        
+    return np.array(time), np.array(data)        
 
 if __name__ == "__main__":
     
@@ -24,10 +25,10 @@ if __name__ == "__main__":
         legend = sys.argv[i]
         time, data = load(sys.argv[i+1], 1)
         if i != 1:
-            plt.plot(time, data, label=legend, color="blue")
+            plt.plot(time, data, label=legend)
         elif i == 1:
-            plt.plot(time, data-20, color="red")
-            plt.plot(time, data+20, color="red")
+            plt.plot(time, data-ERROR, color="red")
+            plt.plot(time, data+ERROR, color="red")
             plt.plot(time, data, label=legend, color="purple")
         
     plt.legend()

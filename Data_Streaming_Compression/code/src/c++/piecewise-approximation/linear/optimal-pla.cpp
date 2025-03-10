@@ -113,10 +113,12 @@ namespace OptimalPLA {
         IterIO outputFile(output, false);
         BinObj* compress_data = inputFile.readBin();
 
+        int count = 0;
+
         time_t basetime = compress_data->getLong();
         while (compress_data->getSize() != 0) {
             clock.start();
-            
+            count++;
             unsigned short length = compress_data->getShort();
             float slope = compress_data->getFloat();
             float intercept = compress_data->getFloat();
@@ -129,6 +131,8 @@ namespace OptimalPLA {
         delete compress_data;
         inputFile.close();
         outputFile.close();
+
+        std::cout << "\nNumber of segments: " << count << "\n ---------------------- \n";
 
         // Profile average latency
         std::cout << std::fixed << "Time taken for each segment (ns): " << clock.getAvgDuration() << "\n";

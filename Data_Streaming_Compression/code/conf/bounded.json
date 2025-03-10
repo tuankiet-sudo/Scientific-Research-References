@@ -1,10 +1,10 @@
 {
-    "data": "data/Synthesis/quadratic.csv",
-    "compress": "out/compress/quadratic_bounded.bin",
-    "decompress": "out/decompress/quadratic_bounded.csv",
+    "data": "data/UCR-time-series/Fungi.csv",
+    "compress": "out/compress/quadratic_bounded_4.bin",
+    "decompress": "out/decompress/quadratic_bounded_4.csv",
     "interval": 1,
     "algorithm": {
         "name": "bounded",
-        "error": 20
+        "error": 4.355
     }
 }

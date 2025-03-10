@@ -45,7 +45,7 @@ namespace SmartGridCompression {
 
             float getCompressionRatio() override {
                 if (this->length == 0) return -1;       // Ignore this model
-                else return (float) this->length / (1 + 2 + 4);
+                else return (float) this->length / (2 + 4);
             }
 
             void clear() override {
@@ -218,7 +218,7 @@ namespace SmartGridCompression {
 
             float getCompressionRatio() override {
                 if (this->length == 0) return -1;       // Ignore this model
-                else return (float) this->length / (1 + 2 + 4 + 4);
+                else return (float) this->length / (2 + 4 + 4);
             }
 
             void clear() override {
@@ -303,7 +303,7 @@ namespace SmartGridCompression {
 
             float getCompressionRatio() override {
                 if (this->length == 0) return -1;       // Ignore this model
-                else return (float) this->length / (1 + 2 + 4 * (degree + 1));
+                else return (float) this->length / (2 + 4 * (degree + 1));
             }
 
             void clear() override {
@@ -525,6 +525,10 @@ namespace SmartGridCompression {
         IterIO outputFile(output, false);
         BinObj* compress_data = inputFile.readBin();
 
+        int constant_count = 0;
+        int linear_count = 0;
+        int polynomial_count = 0;
+
         time_t basetime = compress_data->getLong();
         clock.start();
         while (compress_data->getSize() != 0) {
@@ -532,10 +536,12 @@ namespace SmartGridCompression {
             unsigned short length = compress_data->getShort();
 
             if (degree == 0) {
+                constant_count++;
                 float value = compress_data->getFloat();
                 __decompress_segment(outputFile, interval, basetime, length, value);
             }
             else if (degree == 1) {
+                linear_count++;
                 float slope = compress_data->getFloat();
                 float intercept = compress_data->getFloat();
                 
@@ -543,6 +549,7 @@ namespace SmartGridCompression {
                 __decompress_segment(outputFile, interval, basetime, length, line);
             }
             else {
+                polynomial_count++;
                 float* coefficients = new float[degree+1];
                 for (int i = 0; i <= degree; i++) {
                     coefficients[i] = compress_data->getFloat();
@@ -560,6 +567,11 @@ namespace SmartGridCompression {
         delete compress_data;
         inputFile.close();
         outputFile.close();
+
+        std::cout << "\nNumber of constant segments: " << constant_count << "\n";
+        std::cout << "Number of linear segments: " << linear_count << "\n";
+        std::cout << "Number of polynomial segments: " << polynomial_count << "\n";
+        std::cout << "Total number of segments: " << (constant_count+linear_count+polynomial_count) << "\n ---------------------- \n";
 
         // Profile average latency
         std::cout << std::fixed << "Time taken for each segment (ns): " << clock.getAvgDuration() << "\n";
