@@ -508,6 +508,25 @@ namespace Unbounded {
     //     timeFile.close();
     // }
 
+    bool __check(Point2D& p1, Point2D& p2, Point2D& p3) {
+        Eigen::MatrixXd A(3, 3);
+        A << p1.x*p1.x, p1.x, 1,
+             p2.x*p2.x, p2.x, 1,
+             p3.x*p3.x, p3.x, 1;
+    
+        Eigen::VectorXd b(3);
+        b << p1.y, p2.y, p3.y;
+    
+        Eigen::VectorXd x = A.colPivHouseholderQr().solve(b);
+        float extreme = (-x[1]) / (2*x[0]);
+    
+        std::cout << "The solution is:\n" << x.transpose() << std::endl;
+        std::cout << "The derivative is:\n" << extreme << std::endl;
+        
+        if (extreme < p1.x || extreme > p3.x) return true;
+        else return false;
+    }
+    
     void compress(TimeSeries& timeseries, float bound, std::string output) {
         clock.start();
         IterIO outputFile(output, false);
@@ -521,10 +540,14 @@ namespace Unbounded {
         int phase = 1;
         LinearModel* l_1 = new LinearModel();
         LinearModel* l_2 = new LinearModel();
-        float s_index = -1; float s_val = -1; float e_val = -1;
+        
+        Point2D p1(-1, -1); Point2D p2(-1, -1); Point2D p3(-1, -1);
 
         int degree = 1; int direction = 0; // -1 decrease, 1 increase
         int index = 0; bool flag = false; int scenario = -1;
+
+        int count = 0;
+        int r_count = 0;
 
         while (!buffer.empty()) {
             if (timeseries.hasNext()) {
@@ -539,66 +562,103 @@ namespace Unbounded {
 
                 if (l_1->isComplete) {
                     phase = 2;
-                    s_val = p.y;
-                    s_index = p.x;
-                    e_val = segment.back().y;
+                    p1 = Point2D(0, l_1->getLine()->subs(0));
+                    p2 = Point2D(l_1->length-1, l_1->getLine()->subs(l_1->length-1));
                 }
             }
             if (phase == 2) {
                 if (!l_2->isComplete) l_2->fit(bound, p);
+                if (l_2->isComplete) p3 = Point2D(l_1->length+l_2->length-1, l_2->getLine()->subs(l_1->length+l_2->length-1));
             }
 
             if (l_1->isComplete && l_2->isComplete) {
                 Line* line_1 = l_1->getLine();
                 Line* line_2 = l_2->getLine();
 
-                bool f_p = (line_1->get_slope() > line_2->get_slope() && line_1->subs(s_index) > s_val+bound && e_val - bound < s_val + bound)
-                            || (line_1->get_slope() < line_2->get_slope() && line_1->subs(s_index) < s_val-bound && e_val + bound > s_val - bound);
+                scenario = 1; flag = true;
 
-                if (f_p) {
-                    scenario = 2;
-                    int n_direction = line_1->get_slope() > line_2->get_slope() ? -1 : 1;
-                    if (direction != n_direction) {
-                        direction = n_direction;
-                        degree += 1;
-                    }
+                int n_direction = line_1->get_slope() > line_2->get_slope() ? -1 : 1;
+                if (direction != n_direction) {
+                    direction = n_direction;
+                    degree += 1;
 
-                    if (degree > 3) {
-                        degree--;
-                        scenario = 0;
-                        flag = true;
-                    }
-                    else {
-                        delete l_1; l_1 = l_2;
-                        l_2 = new LinearModel();
-                        l_2->fit(bound, p);
+                    delete l_1; l_1 = l_2;
+                    l_2 = new LinearModel();
+                    l_2->fit(bound, p);
 
-                        s_val = p.y;
-                        s_index = p.x;
-                        e_val = segment.back().y;
-                    }
+                    p1 = Point2D(p2.x, p2.y);
+                    p2 = Point2D(p3.x, p3.y);
                 }
-                else if (scenario == 2) flag = true;
-                else { scenario = 1; flag = true; }
+                else if (line_1->get_slope()*line_2->get_slope()>0) {
+                    if (!__check(p1, p2, p3)) {
+                        flag = true;
+                        count++;
+                    }
+                    else r_count++;
+                }
+
+                // bool f_p = (line_1->get_slope() > line_2->get_slope() && line_1->subs(s_index) > s_val+bound && e_val - bound < s_val + bound)
+                //             || (line_1->get_slope() < line_2->get_slope() && line_1->subs(s_index) < s_val-bound && e_val + bound > s_val - bound);
+
+                // if (f_p) {
+                //     scenario = 2;
+                //     int n_direction = line_1->get_slope() > line_2->get_slope() ? -1 : 1;
+                //     if (direction != n_direction) {
+                //         direction = n_direction;
+                //         degree += 1;
+
+                //         delete l_1; l_1 = l_2;
+                //         l_2 = new LinearModel();
+                //         l_2->fit(bound, p);
+
+                //         p1 = Point2D(p2.x, p2.y);
+                //         p2 = Point2D(p3.x, p3.y);
+                //     }
+                //     else if (line_1->get_slope()*line_2->get_slope()>0) {
+                //         if (!__check(p1, p2, p3)) {
+                //             flag = true;
+                //             count++;
+                //         }
+                //         else r_count++;
+                //     }
+
+                    
+
+                //     // if (degree > 3) {
+                //     //     degree--;
+                //     //     scenario = 0;
+                //     //     flag = true;
+                //     // }
+                //     // else {
+                //     //     delete l_1; l_1 = l_2;
+                //     //     l_2 = new LinearModel();
+                //     //     l_2->fit(bound, p);
+
+                //     //     p1 = Point2D(p2.x, p2.y);
+                //     //     p2 = Point2D(p3.x, p3.y);
+                //     // }
+                // }
+                // else if (scenario == 2) flag = true;
+                // else { scenario = 1; flag = true; }
             }
 
             if (flag) {
                 if (scenario == 0) {
-                    PolynomialModel* polynomialModel = new PolynomialModel(degree);
-                    polynomialModel->fit(bound, segment, l_2->length);
+                    // PolynomialModel* polynomialModel = new PolynomialModel(degree);
+                    // polynomialModel->fit(bound, segment, l_2->length);
 
-                    __yield(compress_data, polynomialModel);
+                    // __yield(compress_data, polynomialModel);
                     
-                    segment = { segment.end() - l_2->length, segment.end() };
-                    for (int i=0; i<segment.size(); i++) segment[i].x = i; 
+                    // segment = { segment.end() - l_2->length, segment.end() };
+                    // for (int i=0; i<segment.size(); i++) segment[i].x = i; 
                     
-                    phase = 2; p = Point2D(segment.size(), p.y);
-                    delete l_1; l_1 = l_2; l_1->translation(s_index);
-                    l_2 = new LinearModel(); l_2->fit(bound, p);
+                    // phase = 2; p = Point2D(segment.size(), p.y);
+                    // delete l_1; l_1 = l_2; l_1->translation(s_index);
+                    // l_2 = new LinearModel(); l_2->fit(bound, p);
                     
-                    s_index = p.x; s_val = p.y; e_val = segment.back().y;
-                    degree = 1; direction = 0;
-                    flag = false; scenario = -1;
+                    // s_index = p.x; s_val = p.y; e_val = segment.back().y;
+                    // degree = 1; direction = 0;
+                    // flag = false; scenario = -1;
                 }
                 else if (scenario == 1) {
                     __yield(compress_data, l_1);
@@ -607,10 +667,11 @@ namespace Unbounded {
                     for (int i=0; i<segment.size(); i++) segment[i].x = i; 
 
                     phase = 2; p = Point2D(segment.size(), p.y);
-                    delete l_1; l_1 = l_2; l_1->translation(s_index);
+                    delete l_1; l_1 = l_2; l_1->translation(p2.x);
                     l_2 = new LinearModel(); l_2->fit(bound, p);
 
-                    s_index = p.x; s_val = p.y; e_val = segment.back().y;
+                    p1 = Point2D(p2.x, p2.y);
+                    p2 = Point2D(p3.x, p3.y);
                     degree = 1; direction = 0;
                     flag = false; scenario = -1;
                 }
@@ -627,8 +688,8 @@ namespace Unbounded {
 
                     p = Point2D(0, p.y); l_1->fit(bound, p);
 
-                    s_index = -1; s_val = -1; e_val = -1;
-                    degree = 1; direction = 0; 
+                    // s_index = -1; s_val = -1; e_val = -1;
+                    p1 = Point2D(p2.x, p2.y);
                     flag = false; scenario = -1;
                 }
             }
@@ -645,6 +706,8 @@ namespace Unbounded {
         
         clock.tick();
         double avg_time = clock.getAvgDuration() / timeseries.size();
+
+        std::cout << "count: " << count << " --- r_count: " << r_count << " ####\n";
 
         // Profile average latency
         std::cout << std::fixed << "Time taken for each data point (ns): " << avg_time << "\n";
