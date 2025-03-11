@@ -16,7 +16,7 @@ def load(file, index):
             time.append(int(line[0]))
             data.append(float(line[index]))
         
-    return np.array(time), np.array(data)        
+    return np.array(time[:]), np.array(data[:])        
 
 if __name__ == "__main__":
     
@@ -27,9 +27,13 @@ if __name__ == "__main__":
         if i != 1:
             plt.plot(time, data, label=legend)
         elif i == 1:
-            plt.plot(time, data-ERROR, color="red")
-            plt.plot(time, data+ERROR, color="red")
-            plt.plot(time, data, label=legend, color="purple")
-        
-    plt.legend()
-    plt.show()
+            start = 0
+            interval = 1000
+            
+            while start < len(time):
+                # plt.plot(time[start:start+interval], data[start:start+interval]-ERROR, color="red")
+                # plt.plot(time[start:start+interval], data[start:start+interval]+ERROR, color="red")
+                plt.plot(time[start:start+interval], data[start:start+interval], label=legend, color="purple")
+                start += interval
+                plt.legend()
+                plt.show()

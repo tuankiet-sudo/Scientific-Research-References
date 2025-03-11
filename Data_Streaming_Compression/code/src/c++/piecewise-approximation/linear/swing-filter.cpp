@@ -8,6 +8,8 @@ namespace SwingFilter {
         obj->put(length);
         obj->put(line.get_slope());
         obj->put(line.get_intercept());
+
+        std::cout << "Linear: " << line.get_slope() << " " << line.get_intercept() << "\n";
     }
 
     Line __fit(std::vector<Point2D>& segment, Line& u, Line& l, Point2D& p) {

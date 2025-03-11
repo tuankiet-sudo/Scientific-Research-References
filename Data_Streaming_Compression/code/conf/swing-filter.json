@@ -1,5 +1,5 @@
 {
-    "data": "data/Synthesis/quadratic.csv",
+    "data": "data/UCR-time-series/Fungi.csv",
     "compress": "out/compress/quadratic_swing-filter.bin",
     "decompress": "out/decompress/quadratic_swing-filter.csv",
     "interval": 1,
