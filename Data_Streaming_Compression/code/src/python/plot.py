@@ -25,15 +25,11 @@ if __name__ == "__main__":
         legend = sys.argv[i]
         time, data = load(sys.argv[i+1], 1)
         if i != 1:
-            plt.plot(time, data, label=legend)
+            plt.plot(time[:1000], data[:1000], label=legend)
         elif i == 1:
-            start = 0
-            interval = 1000
-            
-            while start < len(time):
-                # plt.plot(time[start:start+interval], data[start:start+interval]-ERROR, color="red")
-                # plt.plot(time[start:start+interval], data[start:start+interval]+ERROR, color="red")
-                plt.plot(time[start:start+interval], data[start:start+interval], label=legend, color="purple")
-                start += interval
-                plt.legend()
-                plt.show()
+            # plt.plot(time[:], data[:]-ERROR, color="red")
+            # plt.plot(time[:], data[:]+ERROR, color="red")
+            plt.plot(time[:1000], data[:1000], label=legend, color="purple")
+        
+    plt.legend()
+    plt.show()

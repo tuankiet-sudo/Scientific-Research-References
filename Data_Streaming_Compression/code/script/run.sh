@@ -32,27 +32,27 @@ echo '' > $COMPRESS.mon
 echo '' > $COMPRESS.time
 bin/compress $DATA $COMPRESS $ALGO
 
-# # Decompressing phase
-# echo -e "\n-------------------------"
-# echo "Start decompressing..."
-# echo '' > $DECOMPRESS
-# echo '' > $DECOMPRESS.mon
-# echo '' > $DECOMPRESS.time
-# bin/decompress $COMPRESS $DECOMPRESS $INTERVAL $ALGO
+# Decompressing phase
+echo -e "\n-------------------------"
+echo "Start decompressing..."
+echo '' > $DECOMPRESS
+echo '' > $DECOMPRESS.mon
+echo '' > $DECOMPRESS.time
+bin/decompress $COMPRESS $DECOMPRESS $INTERVAL $ALGO
 
-# # Statistic phase
-# echo -e "\n-------------------------"
-# echo "Start statisticizing..."
-# python3 src/python/statistics.py $DATA $DECOMPRESS $COMPRESS > .statistic
+# Statistic phase
+echo -e "\n-------------------------"
+echo "Start statisticizing..."
+python3 src/python/statistics.py $DATA $DECOMPRESS $COMPRESS > .statistic
 
-# echo -n $DATA,$(echo $ALGO | awk -F " " '{print $1}'),$(echo $ALGO | awk -F " " '{print $2}') >> out/experiments.csv
-# cat .statistic | while read line; do
-#     echo $line
-#     echo -n ,$(echo $line | awk -F ":" '{print $2}' | xargs) >> out/experiments.csv 
-# done
+echo -n $DATA,$(echo $ALGO | awk -F " " '{print $1}'),$(echo $ALGO | awk -F " " '{print $2}') >> out/experiments.csv
+cat .statistic | while read line; do
+    echo $line
+    echo -n ,$(echo $line | awk -F ":" '{print $2}' | xargs) >> out/experiments.csv 
+done
 
-# echo -n ,$(cat $COMPRESS.time | awk -F ":" '{print $2}' | xargs) >> out/experiments.csv
-# echo ,$(cat $DECOMPRESS.time | awk -F ":" '{print $2}' | xargs) >> out/experiments.csv
-# rm -f .statistic
+echo -n ,$(cat $COMPRESS.time | awk -F ":" '{print $2}' | xargs) >> out/experiments.csv
+echo ,$(cat $DECOMPRESS.time | awk -F ":" '{print $2}' | xargs) >> out/experiments.csv
+rm -f .statistic
 
 exit 0

@@ -1,10 +1,10 @@
 {
-    "data": "data/UCR-time-series/Fungi.csv",
+    "data": "data/UCR-time-series/Crop.csv",
     "compress": "out/compress/quadratic_unbounded.bin",
     "decompress": "out/decompress/quadratic_unbounded.csv",
     "interval": 1,
     "algorithm": {
         "name": "unbounded",
-        "error": 4.355
+        "error": 0.10325
     }
 }

@@ -4,48 +4,6 @@ namespace Unbounded {
 
     Clock clock;
 
-    // Constant approximate
-    class ConstantModel {
-        private:
-            float min;
-            float max;
-
-        public:
-            bool isComplete;
-            unsigned short length;
-
-            ConstantModel() {
-                this->length = 0;
-                this->min = INFINITY;
-                this->max = -INFINITY;
-                this->isComplete = false;
-            }
-
-            float getConstant() {
-                return (this->max + this->min) / 2;
-            }
-
-            float getCompressionRatio() {
-                if (this->length == 0) return -1;       // Ignore this model
-                else return (float) this->length / (1 + 2 + 4);
-            }
-
-            void fit(float bound, Point2D& p)  {
-                float n_min = this->min < p.y ? min : p.y;
-                float n_max = this->max > p.y ? max : p.y;
-                
-                if (n_max - n_min <= 2 * bound) {
-                    this->length++;
-                    this->max = n_max;
-                    this->min = n_min;
-                }
-                else {
-                    this->isComplete = true;
-                    return;
-                }
-            }
-    };
-
     // Linear approximate    
     class LinearModel {
         private:
@@ -58,7 +16,7 @@ namespace Unbounded {
 
         public:
             bool isComplete;
-            unsigned short length;
+            short length;
             
             LinearModel() {
                 this->length = 0;
@@ -94,11 +52,6 @@ namespace Unbounded {
                 return new Line(a_ig, b_ig);
             }
 
-            float getCompressionRatio() {
-                if (this->length == 0) return -1;       // Ignore this model
-                else return (float) this->length / (1 + 2 + 4 + 4);
-            }
-
             void fit(float bound, Point2D& p)  {
                 if (this->length == 0) {
                     this->p1 = new Point2D(p.x, p.y);
@@ -111,7 +64,7 @@ namespace Unbounded {
                     this->l_line = new Line(l.get_slope(), l.get_intercept());
                 }
                 else {
-                    if (this->length > 65000 || this->l_line->subs(p.x) > p.y + bound || p.y - bound > this->u_line->subs(p.x)) {
+                    if (this->length > 32500 || this->l_line->subs(p.x) > p.y + bound || p.y - bound > this->u_line->subs(p.x)) {
                         this->isComplete = true;
                         return;
                     }
@@ -145,7 +98,7 @@ namespace Unbounded {
 
         public:
             int degree;
-            unsigned short length;
+            short length;
 
             PolynomialModel(int degree) {
                 this->degree = degree;
@@ -206,27 +159,16 @@ namespace Unbounded {
             }
     };
 
-    void __yield(BinObj* obj, ConstantModel* model) {
-        unsigned char degree = 0;
-        short length = model->length;
-        float value = model->getConstant();
-
-        obj->put(degree);
-        obj->put(length);
-        obj->put(value);
-    }
-
     void __yield(BinObj* obj, LinearModel* model) {
         unsigned char degree = 1;
-        short length = model->length;
+        short length = -model->length;
         Line* line = model->getLine();
 
-        obj->put(degree);
         obj->put(length);
         obj->put(line->get_slope());
         obj->put(line->get_intercept());
 
-        std::cout << "Linear: " << length << "\n";
+        // std::cout << "Linear: " << length << "\n";
     }
 
     void __yield(BinObj* obj, PolynomialModel* model) {
@@ -234,13 +176,13 @@ namespace Unbounded {
         short length = model->length;
         Polynomial* polynomial = model->getPolynomial();
 
-        obj->put(degree);
         obj->put(length);
+        obj->put(degree);
         for (int i = 0; i <= model->degree; i++) {
             obj->put(polynomial->coefficients[i]);
         }
 
-        std::cout << "Polynomial: " << model->degree << " --- " << length << "\n";
+        // std::cout << "Polynomial: " << model->degree << " --- " << length << "\n";
     }
 
     Point2D __check(Point2D& p1, Point2D& p2, Point2D& p3) {
@@ -275,7 +217,7 @@ namespace Unbounded {
         std::vector<Point2D> segment = {Point2D(0, d->get_value())};
         Point2D p1(0, d->get_value());
         Point2D p2(-1, -1); Point2D p3(-1, -1);
-
+        
         int phase = 1;
         LinearModel* l_1 = new LinearModel(); l_1->fit(bound, p1);
         LinearModel* l_2 = new LinearModel();
@@ -291,19 +233,15 @@ namespace Unbounded {
 
                 if (l_1->isComplete) {
                     phase = 2;
-                    p2 = Point2D(
-                        p1.x + l_1->length - 1, 
-                        l_1->getLine()->subs(p1.x + l_1->length - 1)
-                    );
-
-                    l_2->fit(bound, p2);
+                    p2 = Point2D(p.x, p.y);
+                    l_2->fit(bound, p);
                 }
             }
-            if (phase == 2) {
+            else if (phase == 2) {
                 if (!l_2->isComplete) l_2->fit(bound, p);
                 if (l_2->isComplete) {
                     p3 = Point2D(
-                        p2.x + l_2->length - 1, 
+                        p2.x + l_2->length - 1,
                         l_2->getLine()->subs(p2.x + l_2->length - 1)
                     );
                 }
@@ -313,16 +251,16 @@ namespace Unbounded {
                 Line* line_1 = l_1->getLine();
                 Line* line_2 = l_2->getLine();
 
-                // std::cout << "Linear: " << line_1->get_slope() << " " << line_1->get_intercept() << "\n";
-
-                Point2D extreme = __check(p1, p2, p3);
-                if (line_1->get_slope() * line_2->get_slope() > 0) {
-                    if (extreme.x > p1.x && extreme.x < p3.x) flag = true;
-                }
-                else {
-                    if (std::abs(extreme.y - p2.y) > bound) flag = true;
-                }
-
+                // Point2D intersection = Line::intersection(*line_1, *line_2);
+                // Point2D extreme = __check(p1, intersection, p3);
+                // if (line_1->get_slope() * line_2->get_slope() > 0) {
+                //     if (extreme.x > p1.x && extreme.x < p3.x) flag = true;
+                // }
+                // else {
+                //     if (std::abs(extreme.y - intersection.y) > bound) flag = true;
+                // }
+                
+                flag = true;
                 if (!flag) {
                     int n_direction = line_1->get_slope() > line_2->get_slope() ? -1 : 1;
                     if (direction != n_direction) {
@@ -332,11 +270,10 @@ namespace Unbounded {
 
                     delete l_1; l_1 = l_2;
                     l_2 = new LinearModel();
-                    l_2->fit(bound, p3);
                     l_2->fit(bound, p);
 
                     p1 = Point2D(p2.x, p2.y);
-                    p2 = Point2D(p3.x, p3.y);
+                    p2 = Point2D(p.x, p.y);
                 }
                 else {
                     if (degree == 1) {
@@ -355,10 +292,10 @@ namespace Unbounded {
 
                     phase = 2;
                     p1 = Point2D(0, p2.y);
-                    p2 = Point2D(l_1->length - 1, p3.y);
+                    p2 = Point2D(segment.size(), p.y);
                     p = Point2D(segment.size(), p.y);
 
-                    l_2 = new LinearModel(); l_2->fit(bound, p2); l_2->fit(bound, p);
+                    l_2 = new LinearModel(); l_2->fit(bound, p);
 
                     degree = 1; 
                     direction = 0;
@@ -383,15 +320,6 @@ namespace Unbounded {
         IterIO timeFile(output+".time", false);
         timeFile.write("Time taken for each data point (ns): " + std::to_string(avg_time));
         timeFile.close();
-    }
-
-    void __decompress_segment(IterIO& file, int interval, time_t basetime, int length, float value) {
-        for (int i = 0; i < length; i++) {
-            CSVObj obj;
-            obj.pushData(std::to_string(basetime + i * interval));
-            obj.pushData(std::to_string(value));
-            file.write(&obj);
-        }
     }
 
     void __decompress_segment(IterIO& file, int interval, time_t basetime, int length, Line& line) {
@@ -420,21 +348,19 @@ namespace Unbounded {
         time_t basetime = compress_data->getLong();
         clock.start();
         while (compress_data->getSize() != 0) {
-            int degree = (int) compress_data->getByte();
-            unsigned short length = compress_data->getShort();
+            short length = compress_data->getShort();
 
-            if (degree == 0) {
-                float value = compress_data->getFloat();
-                __decompress_segment(outputFile, interval, basetime, length, value);
-            }
-            else if (degree == 1) {
+            if (length < 0) {
+                // Linear segment
                 float slope = compress_data->getFloat();
                 float intercept = compress_data->getFloat();
-                
+
+                length = -length;
                 Line line(slope, intercept);
                 __decompress_segment(outputFile, interval, basetime, length, line);
             }
             else {
+                int degree = (int) compress_data->getByte();
                 float* coefficients = new float[degree+1];
                 for (int i = 0; i <= degree; i++) {
                     coefficients[i] = compress_data->getFloat();
