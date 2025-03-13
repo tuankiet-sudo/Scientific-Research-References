@@ -2,6 +2,7 @@
 #define ALGEBRAIC_MATRIX_HPP
 
 #include <string>
+#include <math.h>
 #include <iostream>
 
 // Source for manipulating matrix

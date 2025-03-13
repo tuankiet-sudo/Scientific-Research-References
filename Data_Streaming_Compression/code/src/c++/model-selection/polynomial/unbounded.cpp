@@ -152,9 +152,11 @@ namespace Unbounded {
                 for (int i = 0; i <= this->degree; i++) {
                     coefficients[this->degree-i] = x(i);
                 }
-
-                std::cout << "---- " << this->degree << "\n";
-                std::cout << "model: " << x.transpose() << "\n";
+                
+                std::cout << "*****************\n";
+                std::cout << "minobj: " << minobj << "\n"; 
+                std::cout << "model: " << x.transpose() << "\n";  
+                std::cout << "*****************\n";
 
                 if (this->polynomial != nullptr) delete this->polynomial;
                 this->polynomial = new Polynomial(this->degree, coefficients);
@@ -202,10 +204,10 @@ namespace Unbounded {
         float extreme_x = (-x(1)) / (2*x(0));
         float extreme_y = x(0)*extreme_x*extreme_x + x(1)*extreme_x + x(2);
 
-        std::cout << "In: " << p1.x << "," << p1.y << " --- ";
-        std::cout << p2.x << "," << p2.y << " --- ";
-        std::cout << p3.x << "," << p3.y << " -> ";
-        std::cout << "extreme: " << extreme_x << "," << extreme_y << "\n";
+        // std::cout << "In: " << p1.x << "," << p1.y << " --- ";
+        // std::cout << p2.x << "," << p2.y << " --- ";
+        // std::cout << p3.x << "," << p3.y << " -> ";
+        // std::cout << "extreme: " << extreme_x << "," << extreme_y << "\n";
 
         return Point2D(extreme_x, extreme_y);
     }
@@ -273,16 +275,22 @@ namespace Unbounded {
                         direction = n_direction;
                         degree += 1;
                     }
+                    if (degree > 4) {
+                        flag = true;
+                        degree = 4;
+                    }
+                    else {
+                        delete l_1; l_1 = l_2;
+                        l_2 = new LinearModel();
+                        l_2->fit(bound, p);
 
-                    delete l_1; l_1 = l_2;
-                    l_2 = new LinearModel();
-                    l_2->fit(bound, p);
-
-                    p1 = Point2D(p2.x, p2.y);
-                    p2 = Point2D(p.x, p.y);
+                        p1 = Point2D(p2.x, p2.y);
+                        p2 = Point2D(p.x, p.y);
+                    }
                 }
-                else {
-                    std::cout << "Index: " << index << " ";
+                 
+                if (flag) {
+                    // std::cout << "Index: " << index << " ";
                     if (degree == 1) {
                         __yield(compress_data, l_1);
                     }

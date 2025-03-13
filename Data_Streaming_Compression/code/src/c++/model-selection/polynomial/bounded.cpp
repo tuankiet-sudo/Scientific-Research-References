@@ -1,3 +1,5 @@
+#include <iomanip>
+#include "algebraic/matrix.hpp"
 #include "model-selection/polynomial.hpp"
 
 namespace Bounded {
@@ -23,7 +25,7 @@ namespace Bounded {
             if (i != degree + 1) c(i) = 0.0;
             else c(i) = 1.0;
         }
-
+        
         for (int i=0; i<segment.size(); i++) {                                                              
             for (int j=degree; j>=0; j--) {
                 A(2*i, degree-j) = -pow(segment[i].x, j);
@@ -45,6 +47,19 @@ namespace Bounded {
             coefficients[degree-i] = x(i);
         }
 
+        std::cout << "-----\n";
+        for (int i=0; i<c.rows(); i++) std::cout << std::fixed << std::setprecision(4) << c(i) << "\n";
+        std::cout << "-----\n";
+        for (int i=0; i<b.rows(); i++) std::cout << std::fixed << std::setprecision(4) << b(i) << "\n";
+        std::cout << "-----\n";
+        for (int i=0; i<A.rows(); i++) {
+            for (int j=0; j<A.cols(); j++) {
+                std::cout << std::fixed << std::setprecision(4) << A(i, j) << " ";
+            }
+            std::cout << "\n";
+        }
+        std::cout << "-----\n";    
+
         return new Polynomial(degree, coefficients);
         
     }
@@ -54,10 +69,16 @@ namespace Bounded {
         BinObj* compress_data = new BinObj;
 
         std::vector<Point2D> segment;
-
+        time_t basetime = -1;
         while(timeseries.hasNext()) {
-            Point2D p(segment.size(), ((Univariate*) timeseries.next())->get_value());
+            Univariate* data = (Univariate*) timeseries.next();
+            Point2D p(segment.size(), data->get_value());
             segment.push_back(p);
+
+            if (basetime == -1) {
+                basetime = data->get_time();
+                compress_data->put(basetime);
+            }
         }
 
         int degree = 6;
@@ -84,7 +105,7 @@ namespace Bounded {
         IterIO outputFile(output, false);
         BinObj* compress_data = inputFile.readBin();
 
-        time_t basetime = 1;
+        time_t basetime = compress_data->getLong();
         while (compress_data->getSize() != 0) {
             int degree = (int) compress_data->getByte();
             unsigned short length = compress_data->getShort();

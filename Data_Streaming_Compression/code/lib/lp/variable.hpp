@@ -21,7 +21,7 @@ namespace lp{
     
   public:
     Variable(double min=0., double max=LP_INFINITY):
-      m_value(0.), m_min(min), m_max(max) {}
+    m_value(0.), m_min(min), m_max(max) {}
     ~Variable(){}
 
     inline void set(double value){ m_value = value; }
@@ -29,34 +29,41 @@ namespace lp{
       m_max = number - LP_EPSILON;
       return *this;
     }
+
     Variable& greater_than(double number){
       m_min = number + LP_EPSILON;
       return *this;
     }
+
     Variable& less_equal(double number){
       m_max = number;
       return *this;
     }
+
     Variable& greater_equal(double number){
       m_min = number;
       return *this;
     }
+
     Variable& equal_to(double number){
       m_min = m_value = m_max = number;
       return *this;
     }
+
     void satisfy(double min, double max){
       m_min = min;
       m_max = max;
       
       if(min > max){
-	m_min = max;
-	m_max = min;
+        m_min = max;
+        m_max = min;
       }
     }
+
     void satisfy(const std::string& expression){
       // TO DO
     }
+    
     inline double get() const{ return m_value; }
     inline double lower_boundary() const{ return m_min; }
     inline double upper_boundary() const{ return m_max; }
