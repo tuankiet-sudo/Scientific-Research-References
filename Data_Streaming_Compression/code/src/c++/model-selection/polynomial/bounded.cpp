@@ -24,7 +24,7 @@ namespace Bounded {
             else c(i) = 1.0;
         }
 
-        for (int i=0; i<segment.size(); i++) {
+        for (int i=0; i<segment.size(); i++) {                                                              
             for (int j=degree; j>=0; j--) {
                 A(2*i, degree-j) = -pow(segment[i].x, j);
                 A(2*i+1, degree-j) = pow(segment[i].x, j);
@@ -46,7 +46,7 @@ namespace Bounded {
         }
 
         return new Polynomial(degree, coefficients);
-                
+        
     }
 
     void compress(TimeSeries& timeseries, float bound, std::string output) {
@@ -60,7 +60,7 @@ namespace Bounded {
             segment.push_back(p);
         }
 
-        int degree = 4;
+        int degree = 6;
         Polynomial* polynomial = fit(bound, segment, degree);
         __yield(compress_data, polynomial, degree, segment.size());
 

@@ -120,7 +120,7 @@ namespace Unbounded {
                 else return (float) this->length / (1 + 2 + 4 * (this->degree + 1));
             }
 
-            void fit(float bound, std::vector<Point2D>& segment, int pivot = 0)  {
+            void fit(float bound, std::vector<Point2D>& segment, int pivot = 0)  {                
                 if (segment.size() < this->degree + 1) {
                     return;
                 }
@@ -153,6 +153,9 @@ namespace Unbounded {
                     coefficients[this->degree-i] = x(i);
                 }
 
+                std::cout << "---- " << this->degree << "\n";
+                std::cout << "model: " << x.transpose() << "\n";
+
                 if (this->polynomial != nullptr) delete this->polynomial;
                 this->polynomial = new Polynomial(this->degree, coefficients);
                 this->length = segment.size() - pivot;
@@ -168,7 +171,7 @@ namespace Unbounded {
         obj->put(line->get_slope());
         obj->put(line->get_intercept());
 
-        // std::cout << "Linear: " << length << "\n";
+        std::cout << "Linear: " << length << "\n";
     }
 
     void __yield(BinObj* obj, PolynomialModel* model) {
@@ -182,7 +185,7 @@ namespace Unbounded {
             obj->put(polynomial->coefficients[i]);
         }
 
-        // std::cout << "Polynomial: " << model->degree << " --- " << length << "\n";
+        std::cout << "Polynomial: " << model->degree << " --- " << length << "\n";
     }
 
     Point2D __check(Point2D& p1, Point2D& p2, Point2D& p3) {
@@ -199,10 +202,10 @@ namespace Unbounded {
         float extreme_x = (-x(1)) / (2*x(0));
         float extreme_y = x(0)*extreme_x*extreme_x + x(1)*extreme_x + x(2);
 
-        // std::cout << "In: " << p1.x << "," << p1.y << " --- ";
-        // std::cout << p2.x << "," << p2.y << " --- ";
-        // std::cout << p3.x << "," << p3.y << " -> ";
-        // std::cout << "extreme: " << extreme_x << "," << extreme_y << "\n";
+        std::cout << "In: " << p1.x << "," << p1.y << " --- ";
+        std::cout << p2.x << "," << p2.y << " --- ";
+        std::cout << p3.x << "," << p3.y << " -> ";
+        std::cout << "extreme: " << extreme_x << "," << extreme_y << "\n";
 
         return Point2D(extreme_x, extreme_y);
     }
@@ -222,6 +225,7 @@ namespace Unbounded {
         LinearModel* l_1 = new LinearModel(); l_1->fit(bound, p1);
         LinearModel* l_2 = new LinearModel();
 
+        int index = 1;
         bool flag = false;
         int degree = 1;     // current degree of polynomial
         int direction = 0;  // -1 decrease, 1 increase
@@ -251,16 +255,18 @@ namespace Unbounded {
                 Line* line_1 = l_1->getLine();
                 Line* line_2 = l_2->getLine();
 
-                // Point2D intersection = Line::intersection(*line_1, *line_2);
-                // Point2D extreme = __check(p1, intersection, p3);
-                // if (line_1->get_slope() * line_2->get_slope() > 0) {
-                //     if (extreme.x > p1.x && extreme.x < p3.x) flag = true;
-                // }
-                // else {
-                //     if (std::abs(extreme.y - intersection.y) > bound) flag = true;
-                // }
-                
-                flag = true;
+                Point2D intersection = Line::intersection(*line_1, *line_2);
+                if (intersection.x < p1.x || intersection.x > p3.x) flag = true;
+                else {
+                    Point2D extreme = __check(p1, intersection, p3);
+                    if (line_1->get_slope() * line_2->get_slope() > 0) {
+                        if (extreme.x > p1.x && extreme.x < p3.x) flag = true;
+                    }
+                    else {
+                        if (std::abs(extreme.y - intersection.y) > bound) flag = true;
+                    }
+                }
+                // flag = true;
                 if (!flag) {
                     int n_direction = line_1->get_slope() > line_2->get_slope() ? -1 : 1;
                     if (direction != n_direction) {
@@ -276,6 +282,7 @@ namespace Unbounded {
                     p2 = Point2D(p.x, p.y);
                 }
                 else {
+                    std::cout << "Index: " << index << " ";
                     if (degree == 1) {
                         __yield(compress_data, l_1);
                     }
@@ -303,6 +310,7 @@ namespace Unbounded {
                 }
             }
 
+            index++;
             segment.push_back(p);
         }
 
