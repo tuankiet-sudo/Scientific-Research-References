@@ -78,6 +78,14 @@ class Polynomial {
             }
         }
 
+        Polynomial(int k, const double* coeffs) {
+            this->degree = k;
+            this->coefficients = new float[k+1];
+            for (int i=0; i<k+1; i++) {
+                this->coefficients[i] = (float) coeffs[i];
+            }
+        }
+
         Polynomial(float coeff) {
             this->degree = 0;
             this->coefficients = new float[1];

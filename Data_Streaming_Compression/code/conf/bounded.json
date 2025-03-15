@@ -1,7 +1,7 @@
 {
     "data": "data/UCR-time-series/Crop.csv",
-    "compress": "out/compress/quadratic_bounded_4.bin",
-    "decompress": "out/decompress/quadratic_bounded_4.csv",
+    "compress": "out/compress/crop_bounded_test.bin",
+    "decompress": "out/decompress/crop_bounded_test.csv",
     "interval": 1,
     "algorithm": {
         "name": "bounded",

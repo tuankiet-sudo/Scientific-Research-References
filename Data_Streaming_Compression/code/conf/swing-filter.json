@@ -1,10 +1,10 @@
 {
-    "data": "data/UCR-time-series/Crop.csv",
-    "compress": "out/compress/quadratic_swing-filter.bin",
-    "decompress": "out/decompress/quadratic_swing-filter.csv",
+    "data": "data/UCR-time-series/Fungi.csv",
+    "compress": "out/compress/fungi_swing-filter.bin",
+    "decompress": "out/decompress/fungi_swing-filter.csv",
     "interval": 1,
     "algorithm": {
         "name": "swing-filter",
-        "error": 0.10325
+        "error": 4.355
     }
 }

@@ -1,3 +1,4 @@
+#include "algebraic/matrix.hpp"
 #include "model-selection/polynomial.hpp"
 
 namespace Unbounded {
@@ -154,14 +155,53 @@ namespace Unbounded {
                 }
                 
                 std::cout << "*****************\n";
-                std::cout << "minobj: " << minobj << "\n"; 
-                std::cout << "model: " << x.transpose() << "\n";  
+                // std::cout << "minobj: " << minobj << "\n"; 
+                // std::cout << "model: " << x.transpose() << "\n";  
+                for (int i=0; i<segment.size() - pivot; i++) {
+                    std::cout << segment[i].x << "," << segment[i].y << "\n"; 
+                }
                 std::cout << "*****************\n";
 
                 if (this->polynomial != nullptr) delete this->polynomial;
                 this->polynomial = new Polynomial(this->degree, coefficients);
                 this->length = segment.size() - pivot;
+
+                delete coefficients;
             }
+
+            // void fit(float bound, std::vector<Point2D>& segment, int pivot = 0)  {                
+            //     if (segment.size() < this->degree + 1) {
+            //         return;
+            //     }
+
+            //     Matrix<double> *X = new Matrix<double>(segment.size(), degree+1);
+            //     Matrix<double> *y = new Matrix<double>(segment.size(), 1);
+
+            //     for (int i = 0; i < segment.size(); i++) {
+            //         for (int k=0; k<degree+1; k++) {
+            //             X->cell[i][k] = pow(i, k);
+            //         } 
+            //         y->cell[i][0] = segment[i].y;
+            //     }
+
+            //     Matrix<double>* X_T = X->transpose();
+            //     Matrix<double>* X_T_X = Matrix<double>::matrix_outter_product(X_T, X);
+            //     Matrix<double>* X_T_X_inv = X_T_X->inverse();
+            //     Matrix<double>* X_T_X_inv_X_T = Matrix<double>::matrix_outter_product(X_T_X_inv, X_T);
+            //     Matrix<double>* theta = Matrix<double>::matrix_outter_product(X_T_X_inv_X_T, y);
+                
+            //     double* coeffs = theta->toVec();
+            //     if (this->polynomial != nullptr) delete this->polynomial;
+            //     this->polynomial = new Polynomial(degree, coeffs);
+
+            //     for (int i=0; i<=degree; i++) {
+            //         std::cout << coeffs[i] << "---\n";
+            //     }
+
+            //     delete coeffs; delete theta;
+            //     delete X; delete y; delete X_T; 
+            //     delete X_T_X; delete X_T_X_inv;
+            // }
     };
 
     void __yield(BinObj* obj, LinearModel* model) {
@@ -173,7 +213,7 @@ namespace Unbounded {
         obj->put(line->get_slope());
         obj->put(line->get_intercept());
 
-        std::cout << "Linear: " << length << "\n";
+        // std::cout << "Linear: " << length << "\n";
     }
 
     void __yield(BinObj* obj, PolynomialModel* model) {
@@ -187,7 +227,7 @@ namespace Unbounded {
             obj->put(polynomial->coefficients[i]);
         }
 
-        std::cout << "Polynomial: " << model->degree << " --- " << length << "\n";
+        // std::cout << "Polynomial: " << model->degree << " --- " << length << "\n";
     }
 
     Point2D __check(Point2D& p1, Point2D& p2, Point2D& p3) {

@@ -18,7 +18,7 @@ namespace NormalEquation {
     };
 
     Clock clock;
-    std::map<int, Matrix<float>*> cache;
+    std::map<int, Matrix<double>*> cache;
 
     void __yield(BinObj* obj, short length, Polynomial* model) {
         obj->put(length);
@@ -28,10 +28,10 @@ namespace NormalEquation {
     }
 
     Polynomial* __calPolynomial(std::vector<Point2D>& window, int degree) {
-            Matrix<float>* theta = nullptr;
+            Matrix<double>* theta = nullptr;
             if (cache.find(window.size()) == cache.end()) {
-                Matrix<float> *X = new Matrix<float>(window.size(), degree+1);
-                Matrix<float> *y = new Matrix<float>(window.size(), 1);
+                Matrix<double> *X = new Matrix<double>(window.size(), degree+1);
+                Matrix<double> *y = new Matrix<double>(window.size(), 1);
 
                 for (int i = 0; i < window.size(); i++) {
                     for (int k=0; k<degree+1; k++) {
@@ -40,11 +40,11 @@ namespace NormalEquation {
                     y->cell[i][0] = window[i].y;
                 }
 
-                Matrix<float>* X_T = X->transpose();
-                Matrix<float>* X_T_X = Matrix<float>::matrix_outter_product(X_T, X);
-                Matrix<float>* X_T_X_inv = X_T_X->inverse();
-                Matrix<float>* X_T_X_inv_X_T = Matrix<float>::matrix_outter_product(X_T_X_inv, X_T);
-                theta = Matrix<float>::matrix_outter_product(X_T_X_inv_X_T, y);
+                Matrix<double>* X_T = X->transpose();
+                Matrix<double>* X_T_X = Matrix<double>::matrix_outter_product(X_T, X);
+                Matrix<double>* X_T_X_inv = X_T_X->inverse();
+                Matrix<double>* X_T_X_inv_X_T = Matrix<double>::matrix_outter_product(X_T_X_inv, X_T);
+                theta = Matrix<double>::matrix_outter_product(X_T_X_inv_X_T, y);
 
                 cache.insert({window.size(), X_T_X_inv_X_T});
 
@@ -52,15 +52,15 @@ namespace NormalEquation {
                 delete X_T_X; delete X_T_X_inv;
             }
             else {
-                Matrix<float> *y = new Matrix<float>(window.size(), 1);
+                Matrix<double> *y = new Matrix<double>(window.size(), 1);
                 for (int i=0; i<window.size(); i++) {
                     y->cell[i][0] = window[i].y;
                 }
-                Matrix<float>* X_T_X_inv_X_T = cache.find(window.size())->second;
-                theta = Matrix<float>::matrix_outter_product(X_T_X_inv_X_T, y);
+                Matrix<double>* X_T_X_inv_X_T = cache.find(window.size())->second;
+                theta = Matrix<double>::matrix_outter_product(X_T_X_inv_X_T, y);
             }
             
-            float* coeffs = theta->toVec();
+            double* coeffs = theta->toVec();
             Polynomial* model = new Polynomial(degree, coeffs);
             delete coeffs; delete theta;
             return model;

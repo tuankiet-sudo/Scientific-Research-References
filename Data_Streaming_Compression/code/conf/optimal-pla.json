@@ -1,10 +1,10 @@
 {
-    "data": "data/UCR-time-series/Crop.csv",
-    "compress": "out/compress/quadratic_optimal-pla.bin",
-    "decompress": "out/decompress/quadratic_optimal-pla.csv",
+    "data": "data/UCR-time-series/Fungi.csv",
+    "compress": "out/compress/fungi_optimal-pla.bin",
+    "decompress": "out/decompress/fungi_optimal-pla.csv",
     "interval": 1,
     "algorithm": {
         "name": "optimal-pla",
-        "error": 0.10325
+        "error": 4.355
     }
 }

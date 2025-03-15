@@ -95,7 +95,7 @@ class Matrix {
 
     // Gauss Jordan method
     // Required square matrix
-    Matrix<float>* inverse() const {
+    Matrix<double>* inverse() const {
         if (this->height != this->width) {
             std::cout << "Can not inverse non square matrix !!" << std::endl;
             exit(-1);
@@ -124,7 +124,7 @@ class Matrix {
         for (int i=0; i<this->height; i++) {
             for (int j=0; j<this->width; j++) {
                 if (j!=i) {
-                    float ratio = matrix->cell[j][i]/matrix->cell[i][i];
+                    double ratio = matrix->cell[j][i]/matrix->cell[i][i];
                     for (int k=0; k<this->width*2; k++) {
                         matrix->cell[j][k] -= ratio*matrix->cell[i][k];
                     }
@@ -133,14 +133,14 @@ class Matrix {
         }
 
         for (int i=0; i<this->width; i++) {
-            float temp = matrix->cell[i][i];
+            double temp = matrix->cell[i][i];
             for (int j=0; j<this->width*2; j++) {
                 matrix->cell[i][j] = matrix->cell[i][j]/temp;
             }
         }
 
         // Retrieve inverse matrix
-        Matrix<float>* result = new Matrix<float>(this->height, this->width);
+        Matrix<double>* result = new Matrix<double>(this->height, this->width);
         for (int i=0; i<this->height; i++) {
             for (int j=0; j<this->width; j++) {
                 result->cell[i][j] = matrix->cell[i][j+this->width];
@@ -185,6 +185,11 @@ class Matrix {
         }
 
         return matrix;
+    }
+
+
+    T at(int row, int col) {
+        return this->cell[row][col];
     }
 };
 
