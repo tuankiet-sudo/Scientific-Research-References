@@ -1,11 +1,11 @@
 {
-    "data": "data/UCR-time-series/Crop.csv",
-    "compress": "out/compress/quadratic_mix-piece.bin",
-    "decompress": "out/decompress/quadratic_mix-piece.csv",
+    "data": "data/UCR-time-series/StarLightCurves.csv",
+    "compress": "out/compress/star_mix-piece.bin",
+    "decompress": "out/decompress/star_mix-piece.csv",
     "interval": 1,
     "algorithm": {
         "name": "mix-piece",
-        "error": 0.10325,
-        "n_segment": 10000000
+        "error": 0.407,
+        "n_segment": 1000000000
     }
 }

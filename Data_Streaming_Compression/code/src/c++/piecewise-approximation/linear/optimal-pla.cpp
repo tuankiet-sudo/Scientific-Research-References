@@ -8,6 +8,8 @@ namespace OptimalPLA {
         obj->put(length);
         obj->put(slope);
         obj->put(intercept);
+
+        std::cout << length << " " << slope << " " << intercept << "\n";
     }
 
     void compress(TimeSeries& timeseries, float bound, std::string output) {

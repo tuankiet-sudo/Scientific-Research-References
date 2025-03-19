@@ -1,7 +1,7 @@
 {
     "data": "data/UCR-time-series/Fungi.csv",
-    "compress": "out/compress/fungi_unbounded_lp.bin",
-    "decompress": "out/decompress/fungi_unbounded_lp.csv",
+    "compress": "out/compress/fungi_unbounded.bin",
+    "decompress": "out/decompress/fungi_unbounded.csv",
     "interval": 1,
     "algorithm": {
         "name": "unbounded",

@@ -1,20 +1,109 @@
 #include "algebraic/matrix.hpp"
 #include "model-selection/polynomial.hpp"
+#include "bitset"
 
 namespace Unbounded {
 
     Clock clock;
 
+    // class LinearModel {
+    //     private:
+    //         Line* u_line;
+    //         Line* l_line;
+    //         Line* line;
+    //         Point2D* p1;
+
+    //         float A_num = 0;
+    //         float A_den = 0;
+
+    //     public:
+    //         bool isComplete;
+    //         short length;
+            
+    //         LinearModel() {
+    //             this->length = 0;
+    //             this->line = nullptr;
+    //             this->u_line = nullptr;
+    //             this->l_line = nullptr;
+    //             this->isComplete = false;
+    //         }
+
+    //         ~LinearModel() {
+    //             if (this->p1 != nullptr) delete this->p1;
+    //             if (this->line != nullptr) delete this->line;
+    //             if (this->l_line != nullptr) delete this->u_line;
+    //             if (this->u_line != nullptr) delete this->l_line;
+    //         }
+
+    //         void translation(Point2D& p) {
+    //             Line* n_line = new Line(this->line->get_slope(), this->line->subs(p.x));
+    //             if (this->line != nullptr) delete this->line;
+
+    //             this->line = n_line; 
+    //             this->p1->x = 0;
+    //         }
+
+    //         Line* getLine() {
+    //             if (this->line == nullptr) {
+    //                 float A_ig = this->A_num / this->A_den;
+    //                 float temp = A_ig > this->u_line->get_slope() ? this->u_line->get_slope() : A_ig;
+    //                 double a_ig = temp > this->l_line->get_slope() ? temp : this->l_line->get_slope();
+    //                 double b_ig = this->p1->y - a_ig * this->p1->x;
+
+    //                 this->line = new Line(a_ig, b_ig);
+    //             }
+            
+    //             return this->line;
+    //         }
+            
+    //         void fit(float bound, Point2D& p)  {
+    //             if (this->length == 0) {
+    //                 this->p1 = new Point2D(p.x, p.y);
+    //             }
+    //             else if (this->length == 1) {
+    //                 Line l = Line::line(*p1, Point2D(p.x, p.y-bound));
+    //                 Line u = Line::line(*p1, Point2D(p.x, p.y+bound));
+
+    //                 this->u_line = new Line(u.get_slope(), u.get_intercept());
+    //                 this->l_line = new Line(l.get_slope(), l.get_intercept());
+    //             }
+    //             else {
+    //                 if (this->l_line->subs(p.x) > p.y + bound || p.y - bound > this->u_line->subs(p.x)) {
+    //                     this->isComplete = true;
+    //                     return;
+    //                 }
+    //                 else {
+    //                     if (p.y + bound < this->u_line->subs(p.x)) {
+    //                         Line l = Line::line(*p1, Point2D(p.x, p.y+bound));
+
+    //                         delete this->u_line;
+    //                         this->u_line = new Line(l.get_slope(), l.get_intercept());
+    //                     }
+                        
+    //                     if (p.y - bound > this->l_line->subs(p.x)) {
+    //                         Line l = Line::line(*p1, Point2D(p.x, p.y-bound));
+
+    //                         delete this->l_line;
+    //                         this->l_line = new Line(l.get_slope(), l.get_intercept());
+    //                     }        
+    //                 }
+    //             }
+                
+    //             this->length++;
+    //             this->A_num += (p.y - this->p1->y) * (p.x - this->p1->x);
+    //             this->A_den += (p.x - this->p1->x) * (p.x - this->p1->x);
+    //         }
+    // };
+
     // Linear approximate    
     class LinearModel {
         private:
+            Line* line;
+            UpperHull u_cvx; 
+            LowerHull l_cvx;
             Line* u_line;
             Line* l_line;
-            Point2D* p1;
-
-            float A_num = 0;
-            float A_den = 0;
-
+        
         public:
             bool isComplete;
             short length;
@@ -23,72 +112,97 @@ namespace Unbounded {
                 this->length = 0;
                 this->u_line = nullptr;
                 this->l_line = nullptr;
+                this->line = nullptr;
                 this->isComplete = false;
             }
 
             ~LinearModel() {
-                if (this->p1 != nullptr) delete this->p1;
                 if (this->l_line != nullptr) delete this->u_line;
                 if (this->u_line != nullptr) delete this->l_line;
+                if (this->line != nullptr) delete this->line;
+                this->u_cvx.clear();
+                this->l_cvx.clear();
             }
 
             void translation(Point2D& p) {
-                Line* n_l_line = new Line(this->l_line->get_slope(), this->l_line->subs(p.x));
-                Line* n_u_line = new Line(this->u_line->get_slope(), this->u_line->subs(p.x));
-
-                if (this->l_line != nullptr) delete this->l_line;
-                if (this->u_line != nullptr) delete this->u_line;
-
-                this->l_line = n_l_line; 
-                this->u_line = n_u_line;
-                this->p1->x = 0; 
+                Line* n_line = new Line(this->line->get_slope(), this->line->subs(p.x));                
+                if (this->line != nullptr) delete this->line;
+                this->line = n_line;
             }
 
             Line* getLine() {
-                float A_ig = this->A_num / this->A_den;
-                float temp = A_ig > this->u_line->get_slope() ? this->u_line->get_slope() : A_ig;
-                double a_ig = temp > this->l_line->get_slope() ? temp : this->l_line->get_slope();
-                double b_ig = this->p1->y - a_ig * this->p1->x;
-
-                return new Line(a_ig, b_ig);
+                if (this->line == nullptr) { 
+                    this->line = new Line(
+                        (this->u_line->get_slope() + this->l_line->get_slope()) / 2,
+                        (this->u_line->get_intercept() + this->l_line->get_intercept()) / 2
+                    );
+                }
+                
+                return this->line;
             }
 
             void fit(float bound, Point2D& p)  {
                 if (this->length == 0) {
-                    this->p1 = new Point2D(p.x, p.y);
+                    this->u_cvx.append(Point2D(p.x, p.y-bound));
+                    this->l_cvx.append(Point2D(p.x, p.y+bound));
                 }
                 else if (this->length == 1) {
-                    Line l = Line::line(*p1, Point2D(p.x, p.y-bound));
-                    Line u = Line::line(*p1, Point2D(p.x, p.y+bound));
+                    Line u = Line::line(this->u_cvx.at(0), Point2D(p.x, p.y+bound));
+                    Line l = Line::line(this->l_cvx.at(0), Point2D(p.x, p.y-bound));
 
+                    u_cvx.append(Point2D(p.x, p.y-bound));
+                    l_cvx.append(Point2D(p.x, p.y+bound));
                     this->u_line = new Line(u.get_slope(), u.get_intercept());
                     this->l_line = new Line(l.get_slope(), l.get_intercept());
                 }
                 else {
-                    if (this->length > 32500 || this->l_line->subs(p.x) > p.y + bound || p.y - bound > this->u_line->subs(p.x)) {
+                    if (this->l_line->subs(p.x) > p.y + bound || p.y - bound > this->u_line->subs(p.x)) {
                         this->isComplete = true;
                         return;
                     }
                     else {
-                        if (p.y + bound < this->u_line->subs(p.x)) {
-                            Line l = Line::line(*p1, Point2D(p.x, p.y+bound));
-
-                            delete this->u_line;
-                            this->u_line = new Line(l.get_slope(), l.get_intercept());
+                        bool update_u = p.y + bound < this->u_line->subs(p.x);
+                        bool update_l = p.y - bound > this->l_line->subs(p.x);
+    
+                        if (update_u) {
+                            int index = 0;
+                            float min_slp = INFINITY;
+    
+                            for (int i=0; i<this->u_cvx.size(); i++) {
+                                Line line = Line::line(this->u_cvx.at(i), Point2D(p.x, p.y+bound));
+                                if (line.get_slope() < min_slp) {
+                                    min_slp = line.get_slope();
+                                    index = i;
+                                    
+                                    delete this->u_line;
+                                    this->u_line = new Line(line.get_slope(), line.get_intercept());
+                                }
+                            }
+                            this->u_cvx.erase_from_begin(index);
                         }
-                        
-                        if (p.y - bound > this->l_line->subs(p.x)) {
-                            Line l = Line::line(*p1, Point2D(p.x, p.y-bound));
+                        if (update_l) {
+                            int index = 0;
+                            float max_slp = -INFINITY;
+    
+                            for (int i=0; i<this->l_cvx.size(); i++) {
+                                Line line = Line::line(this->l_cvx.at(i), Point2D(p.x, p.y-bound));
+                                if (line.get_slope() > max_slp) {
+                                    max_slp = line.get_slope();
+                                    index = i;
 
-                            delete this->l_line;
-                            this->l_line = new Line(l.get_slope(), l.get_intercept());
-                        }        
+                                    delete this->l_line;
+                                    this->l_line = new Line(line.get_slope(), line.get_intercept());
+                                }
+                            }
+                            this->l_cvx.erase_from_begin(index);
+                        }
+    
+                        if (update_u) this->l_cvx.append(Point2D(p.x, p.y+bound));
+                        if (update_l) this->u_cvx.append(Point2D(p.x, p.y-bound));
                     }
                 }
                 
                 this->length++;
-                this->A_num += (p.y - this->p1->y) * (p.x - this->p1->x);
-                this->A_den += (p.x - this->p1->x) * (p.x - this->p1->x);
             }
     };
 
@@ -122,112 +236,50 @@ namespace Unbounded {
             }
 
             void fit(float bound, std::vector<Point2D>& segment, int pivot = 0)  {                
-                if (segment.size() < this->degree + 1) {
+                if (segment.size() - pivot < this->degree + 1) {
                     return;
                 }
 
-                Eigen::VectorXd x(this->degree + 2);                    // decision variables
-                Eigen::VectorXd c(this->degree + 2);                    // objective coefficients
-                Eigen::MatrixXd A(2*(segment.size() - pivot), this->degree + 2);  // constraint matrix
-                Eigen::VectorXd b(2*(segment.size() - pivot));                    // constraint bound
+                int n = segment.size() - pivot;
+                Eigen::MatrixXd A(n, this->degree + 1);
+                Eigen::VectorXd b(n);
 
-                for (int i=0; i<this->degree+2; i++) {
-                    if (i != this->degree + 1) c(i) = 0.0;
-                    else c(i) = 1.0;
-                }
-
-                for (int i=0; i<segment.size() - pivot; i++) {
-                    for (int j=this->degree; j>=0; j--) {
-                        A(2*i, this->degree-j) = -pow(segment[i].x, j);
-                        A(2*i+1, this->degree-j) = pow(segment[i].x, j);
+                for (int i = 0; i < n; ++i) {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+                    b(i) = segment[i].y;
+                    for (int j = 0; j <= this->degree; ++j) {
+                        A(i, j) = std::pow(segment[i].x, j);
                     }
-                    A(2*i, this->degree+1) = -1.0;
-                    A(2*i+1, this->degree+1) = -1.0;
-
-                    b(2*i) = -segment[i].y;
-                    b(2*i+1) = segment[i].y;
                 }
 
-                double minobj = sdlp::linprog(c, A, b, x);                
-                float* coefficients = new float[this->degree+1];
-                for (int i = 0; i <= this->degree; i++) {
-                    coefficients[this->degree-i] = x(i);
-                }
-                
-                std::cout << "*****************\n";
-                // std::cout << "minobj: " << minobj << "\n"; 
-                // std::cout << "model: " << x.transpose() << "\n";  
-                for (int i=0; i<segment.size() - pivot; i++) {
-                    std::cout << segment[i].x << "," << segment[i].y << "\n"; 
-                }
-                std::cout << "*****************\n";
-
+                Eigen::VectorXd coefficients = (((A.transpose() * A).inverse()) * A.transpose()) * b;
                 if (this->polynomial != nullptr) delete this->polynomial;
-                this->polynomial = new Polynomial(this->degree, coefficients);
-                this->length = segment.size() - pivot;
 
-                delete coefficients;
+                float* coeffs = new float[this->degree+1];
+                for (int i=0; i<=this->degree; i++) coeffs[i] = coefficients(i);
+                this->polynomial = new Polynomial(this->degree, coeffs);
+                this->length = n;
+
+                delete coeffs;
             }
-
-            // void fit(float bound, std::vector<Point2D>& segment, int pivot = 0)  {                
-            //     if (segment.size() < this->degree + 1) {
-            //         return;
-            //     }
-
-            //     Matrix<double> *X = new Matrix<double>(segment.size(), degree+1);
-            //     Matrix<double> *y = new Matrix<double>(segment.size(), 1);
-
-            //     for (int i = 0; i < segment.size(); i++) {
-            //         for (int k=0; k<degree+1; k++) {
-            //             X->cell[i][k] = pow(i, k);
-            //         } 
-            //         y->cell[i][0] = segment[i].y;
-            //     }
-
-            //     Matrix<double>* X_T = X->transpose();
-            //     Matrix<double>* X_T_X = Matrix<double>::matrix_outter_product(X_T, X);
-            //     Matrix<double>* X_T_X_inv = X_T_X->inverse();
-            //     Matrix<double>* X_T_X_inv_X_T = Matrix<double>::matrix_outter_product(X_T_X_inv, X_T);
-            //     Matrix<double>* theta = Matrix<double>::matrix_outter_product(X_T_X_inv_X_T, y);
-                
-            //     double* coeffs = theta->toVec();
-            //     if (this->polynomial != nullptr) delete this->polynomial;
-            //     this->polynomial = new Polynomial(degree, coeffs);
-
-            //     for (int i=0; i<=degree; i++) {
-            //         std::cout << coeffs[i] << "---\n";
-            //     }
-
-            //     delete coeffs; delete theta;
-            //     delete X; delete y; delete X_T; 
-            //     delete X_T_X; delete X_T_X_inv;
-            // }
     };
 
     void __yield(BinObj* obj, LinearModel* model) {
-        unsigned char degree = 1;
-        short length = -model->length;
+        short degree_length = model->length;
         Line* line = model->getLine();
 
-        obj->put(length);
+        obj->put(degree_length);
         obj->put(line->get_slope());
         obj->put(line->get_intercept());
-
-        // std::cout << "Linear: " << length << "\n";
     }
 
     void __yield(BinObj* obj, PolynomialModel* model) {
-        unsigned char degree = model->degree;
-        short length = model->length;
+        short degree_length = model->length | ((model->degree - 1) << 14);
         Polynomial* polynomial = model->getPolynomial();
 
-        obj->put(length);
-        obj->put(degree);
+        obj->put(degree_length);
         for (int i = 0; i <= model->degree; i++) {
             obj->put(polynomial->coefficients[i]);
         }
-
-        // std::cout << "Polynomial: " << model->degree << " --- " << length << "\n";
     }
 
     Point2D __check(Point2D& p1, Point2D& p2, Point2D& p3) {
@@ -267,6 +319,8 @@ namespace Unbounded {
         LinearModel* l_1 = new LinearModel(); l_1->fit(bound, p1);
         LinearModel* l_2 = new LinearModel();
 
+        int count = 0;
+
         int index = 1;
         bool flag = false;
         int degree = 1;     // current degree of polynomial
@@ -298,7 +352,7 @@ namespace Unbounded {
                 Line* line_2 = l_2->getLine();
 
                 Point2D intersection = Line::intersection(*line_1, *line_2);
-                if (intersection.x < p1.x || intersection.x > p3.x) flag = true;
+                if (segment.size() > 16000 || intersection.x <= p1.x || intersection.x >= p3.x) flag = true;
                 else {
                     Point2D extreme = __check(p1, intersection, p3);
                     if (line_1->get_slope() * line_2->get_slope() > 0) {
@@ -308,7 +362,6 @@ namespace Unbounded {
                         if (std::abs(extreme.y - intersection.y) > bound) flag = true;
                     }
                 }
-                // flag = true;
                 if (!flag) {
                     int n_direction = line_1->get_slope() > line_2->get_slope() ? -1 : 1;
                     if (direction != n_direction) {
@@ -330,7 +383,6 @@ namespace Unbounded {
                 }
                  
                 if (flag) {
-                    // std::cout << "Index: " << index << " ";
                     if (degree == 1) {
                         __yield(compress_data, l_1);
                     }
@@ -339,11 +391,12 @@ namespace Unbounded {
                         polynomialModel->fit(bound, segment, l_2->length);
 
                         __yield(compress_data, polynomialModel);
+                        count++;
                     }
 
                     segment = { segment.end() - l_2->length, segment.end() };
                     for (int i=0; i<segment.size(); i++) segment[i].x = i; 
-                    delete l_1; l_1 = l_2; l_1->translation(p3);
+                    delete l_1; l_1 = l_2; l_1->translation(p2);
 
                     phase = 2;
                     p1 = Point2D(0, p2.y);
@@ -370,6 +423,8 @@ namespace Unbounded {
         
         clock.tick();
         double avg_time = clock.getAvgDuration() / timeseries.size();
+
+        std::cout << "Number of polynomial: " << count << "\n";
 
         // Profile average latency
         std::cout << std::fixed << "Time taken for each data point (ns): " << avg_time << "\n";
@@ -404,19 +459,19 @@ namespace Unbounded {
         time_t basetime = compress_data->getLong();
         clock.start();
         while (compress_data->getSize() != 0) {
-            short length = compress_data->getShort();
+            unsigned short degree_length = compress_data->getShort();
+            int degree = (degree_length >> 14) + 1;
+            unsigned short length = degree_length & (0xffff >> 2);
 
-            if (length < 0) {
+            if (degree == 1) {
                 // Linear segment
                 float slope = compress_data->getFloat();
                 float intercept = compress_data->getFloat();
 
-                length = -length;
                 Line line(slope, intercept);
                 __decompress_segment(outputFile, interval, basetime, length, line);
             }
             else {
-                int degree = (int) compress_data->getByte();
                 float* coefficients = new float[degree+1];
                 for (int i = 0; i <= degree; i++) {
                     coefficients[i] = compress_data->getFloat();

@@ -16,20 +16,31 @@ def load(file, index):
             time.append(int(line[0]))
             data.append(float(line[index]))
         
-    return np.array(time[:]), np.array(data[:])        
+    return time, data
 
-if __name__ == "__main__":
-    
+
+def plot(s, e, label, time, data):
     plt.figure(figsize=(16, 8))
-    for i in range(1, len(sys.argv) - 1, 2):
-        legend = sys.argv[i]
-        time, data = load(sys.argv[i+1], 1)
-        if i != 1:
-            plt.plot(time[:1000], data[:1000], label=legend)
-        elif i == 1:
-            # plt.plot(time[:], data[:]-ERROR, color="red")
-            # plt.plot(time[:], data[:]+ERROR, color="red")
-            plt.plot(time[:1000], data[:1000], label=legend, color="purple")
-        
+
+    for i in range(len(label)):
+        plt.plot(time[i][s:e], data[i][s:e], label=label[i])
+
     plt.legend()
     plt.show()
+
+if __name__ == "__main__":
+    label, x, y = [], [], []
+    for i in range(1, len(sys.argv) - 1, 2):
+        time, value = load(sys.argv[i+1], 1)
+
+        label.append(sys.argv[i])
+        x.append(time)
+        y.append(value)
+
+    SIZE = len(x[0])
+    INTERVAL = 5000
+
+    start = 0
+    while start < SIZE:
+        plot(start, start+INTERVAL, label, x, y)
+        start += INTERVAL

@@ -1,10 +1,10 @@
 {
-    "data": "data/UCR-time-series/Crop.csv",
-    "compress": "out/compress/crop_bounded_test.bin",
-    "decompress": "out/decompress/crop_bounded_test.csv",
+    "data": "data/UCR-time-series/Fungi.csv",
+    "compress": "out/compress/fungi_bounded_test.bin",
+    "decompress": "out/decompress/fungi_bounded_test.csv",
     "interval": 1,
     "algorithm": {
         "name": "bounded",
-        "error": 0.10325
+        "error": 4.355
     }
 }

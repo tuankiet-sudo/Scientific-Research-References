@@ -77,7 +77,7 @@ if __name__ == "__main__":
     D_MONITOR = DECOMPRESS + ".mon"
     
     origin_data, approx_data = load(DATA, DECOMPRESS)
-    c_data, d_data = load_monitor(C_MONITOR, D_MONITOR)
+    # c_data, d_data = load_monitor(C_MONITOR, D_MONITOR)
     count_min = min(origin_data.shape[0], approx_data.shape[0])
     
     origin_data = origin_data[:count_min]
@@ -89,7 +89,7 @@ if __name__ == "__main__":
     print("MAE:", mae(origin_data, approx_data))
     print("Max_E:", maxdiff(origin_data, approx_data))
     print("Min_E:", mindiff(origin_data, approx_data))
-    print("c_max_vsz:", np.max(c_data[:,0]))
-    print("c_max_rss:", np.max(c_data[:,1]))
-    print("d_max_vsz:", np.max(d_data[:,0]))
-    print("d_max_rss:", np.max(d_data[:,1]))
+    # print("c_max_vsz:", np.max(c_data[:,0]))
+    # print("c_max_rss:", np.max(c_data[:,1]))
+    # print("d_max_vsz:", np.max(d_data[:,0]))
+    # print("d_max_rss:", np.max(d_data[:,1]))

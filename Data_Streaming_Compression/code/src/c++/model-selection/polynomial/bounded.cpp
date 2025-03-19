@@ -68,24 +68,26 @@ namespace Bounded {
     // }
 
     Polynomial* fit(float bound, std::vector<Point2D>& segment, int degree)  {                
-        // int n = segment.size();
-        // Eigen::MatrixXd A(n, degree + 1);
-        // Eigen::VectorXd b(n);
+        int n = segment.size();
+        Eigen::MatrixXd A(n, degree + 1);
+        Eigen::VectorXd b(n);
 
-        // // Construct the Vandermonde matrix A and vector b
-        // for (int i = 0; i < n; ++i) {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
-        //     b(i) = segment[i].y;
-        //     for (int j = 0; j <= degree; ++j) {
-        //         A(i, j) = pow(i, j);
-        //     }
-        // }
+        // Construct the Vandermonde matrix A and vector b
+        for (int i = 0; i < n; ++i) {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+            b(i) = segment[i].y;
+            for (int j = 0; j <= degree; ++j) {
+                A(i, j) = std::pow(i, j);
+            }
+        }
 
-        // // Solve the normal equations using Eigen
-        // Eigen::MatrixXd E = A.transpose() * A;
+        // Solve the normal equations using Eigen
+        // Eigen::MatrixXd T = A.transpose() * A;
         // Eigen::MatrixXd T = E.inverse();
-        // Eigen::VectorXd coefficients = (A.transpose() * A).ldlt().solve(A.transpose() * b);
-        // // return model;
+        Eigen::VectorXd coefficients = (((A.transpose() * A).inverse()) * A.transpose()) * b;
+        
         // Polynomial* model = new Polynomial(degree, (float*) coefficients.data());
+
+        std::cout << coefficients.transpose() << "\n";
 
         Matrix<double> *X = new Matrix<double>(segment.size(), degree+1);
         Matrix<double> *y = new Matrix<double>(segment.size(), 1);
@@ -129,7 +131,7 @@ namespace Bounded {
             }
         }
 
-        int degree = 6;
+        int degree = 4;
         Polynomial* polynomial = fit(bound, segment, degree);
         __yield(compress_data, polynomial, degree, segment.size());
 
