@@ -1,10 +1,10 @@
 {
-    "data": "data/UCR-time-series/Fungi.csv",
-    "compress": "out/compress/fungi_unbounded.bin",
-    "decompress": "out/decompress/fungi_unbounded.csv",
+    "data": "data/UCR-time-series/PigAirwayPressure.csv",
+    "compress": "out/compress/pig_unbounded.bin",
+    "decompress": "out/decompress/pig_unbounded.csv",
     "interval": 1,
     "algorithm": {
         "name": "unbounded",
-        "error": 4.355
+        "error": 0.95
     }
 }

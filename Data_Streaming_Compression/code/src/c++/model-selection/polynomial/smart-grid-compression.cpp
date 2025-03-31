@@ -359,30 +359,23 @@ namespace SmartGridCompression {
 
     void __yield(BinObj* obj, Model* model) {
         if (model->degree == 0) {
-            unsigned char degree = 0;
-            short length = model->length;
-
-            obj->put(degree);
-            obj->put(length);
+            short degree_length = model->length | (0 << 14);
+            obj->put(degree_length);
             obj->put(((ConstantModel*) model)->getValue());
         }
         else if (model->degree == 1) {
             Line* line = ((LinearModel*) model)->getLine();
-            unsigned char degree = 1;
-            short length = model->length;
+            short degree_length = model->length | (1 << 14);
 
-            obj->put(degree);
-            obj->put(length);
+            obj->put(degree_length);
             obj->put(line->get_slope());
             obj->put(line->get_intercept());
         }
         else {
             Polynomial* polynomial = ((PolynomialModel*) model)->getPolynomial();
-            unsigned char degree = polynomial->degree;
-            short length = model->length;
+            short degree_length = model->length | (polynomial->degree << 14);
 
-            obj->put(degree);
-            obj->put(length);
+            obj->put(degree_length);
             for (int i = 0; i <= polynomial->degree; i++) {
                 obj->put(polynomial->coefficients[i]);
             }
@@ -525,23 +518,18 @@ namespace SmartGridCompression {
         IterIO outputFile(output, false);
         BinObj* compress_data = inputFile.readBin();
 
-        int constant_count = 0;
-        int linear_count = 0;
-        int polynomial_count = 0;
-
         time_t basetime = compress_data->getLong();
         clock.start();
         while (compress_data->getSize() != 0) {
-            int degree = (int) compress_data->getByte();
-            unsigned short length = compress_data->getShort();
+            unsigned short degree_length = compress_data->getShort();
+            int degree = degree_length >> 14;
+            unsigned short length = degree_length & (0xffff >> 2);
 
             if (degree == 0) {
-                constant_count++;
                 float value = compress_data->getFloat();
                 __decompress_segment(outputFile, interval, basetime, length, value);
             }
             else if (degree == 1) {
-                linear_count++;
                 float slope = compress_data->getFloat();
                 float intercept = compress_data->getFloat();
                 
@@ -549,7 +537,6 @@ namespace SmartGridCompression {
                 __decompress_segment(outputFile, interval, basetime, length, line);
             }
             else {
-                polynomial_count++;
                 float* coefficients = new float[degree+1];
                 for (int i = 0; i <= degree; i++) {
                     coefficients[i] = compress_data->getFloat();
@@ -567,11 +554,6 @@ namespace SmartGridCompression {
         delete compress_data;
         inputFile.close();
         outputFile.close();
-
-        std::cout << "\nNumber of constant segments: " << constant_count << "\n";
-        std::cout << "Number of linear segments: " << linear_count << "\n";
-        std::cout << "Number of polynomial segments: " << polynomial_count << "\n";
-        std::cout << "Total number of segments: " << (constant_count+linear_count+polynomial_count) << "\n ---------------------- \n";
 
         // Profile average latency
         std::cout << std::fixed << "Time taken for each segment (ns): " << clock.getAvgDuration() << "\n";

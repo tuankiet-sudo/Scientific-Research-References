@@ -8,8 +8,6 @@ namespace OptimalPLA {
         obj->put(length);
         obj->put(slope);
         obj->put(intercept);
-
-        std::cout << length << " " << slope << " " << intercept << "\n";
     }
 
     void compress(TimeSeries& timeseries, float bound, std::string output) {
@@ -133,8 +131,6 @@ namespace OptimalPLA {
         delete compress_data;
         inputFile.close();
         outputFile.close();
-
-        std::cout << "\nNumber of segments: " << count << "\n ---------------------- \n";
 
         // Profile average latency
         std::cout << std::fixed << "Time taken for each segment (ns): " << clock.getAvgDuration() << "\n";

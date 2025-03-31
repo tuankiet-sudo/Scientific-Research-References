@@ -38,7 +38,7 @@ if __name__ == "__main__":
         y.append(value)
 
     SIZE = len(x[0])
-    INTERVAL = 5000
+    INTERVAL = 1000
 
     start = 0
     while start < SIZE:

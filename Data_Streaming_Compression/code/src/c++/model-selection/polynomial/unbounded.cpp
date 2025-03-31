@@ -1,6 +1,5 @@
 #include "algebraic/matrix.hpp"
 #include "model-selection/polynomial.hpp"
-#include "bitset"
 
 namespace Unbounded {
 
@@ -296,11 +295,6 @@ namespace Unbounded {
         float extreme_x = (-x(1)) / (2*x(0));
         float extreme_y = x(0)*extreme_x*extreme_x + x(1)*extreme_x + x(2);
 
-        // std::cout << "In: " << p1.x << "," << p1.y << " --- ";
-        // std::cout << p2.x << "," << p2.y << " --- ";
-        // std::cout << p3.x << "," << p3.y << " -> ";
-        // std::cout << "extreme: " << extreme_x << "," << extreme_y << "\n";
-
         return Point2D(extreme_x, extreme_y);
     }
     
@@ -318,8 +312,6 @@ namespace Unbounded {
         int phase = 1;
         LinearModel* l_1 = new LinearModel(); l_1->fit(bound, p1);
         LinearModel* l_2 = new LinearModel();
-
-        int count = 0;
 
         int index = 1;
         bool flag = false;
@@ -351,6 +343,7 @@ namespace Unbounded {
                 Line* line_1 = l_1->getLine();
                 Line* line_2 = l_2->getLine();
 
+                int n_direction = line_1->get_slope() > line_2->get_slope() ? -1 : 1;
                 Point2D intersection = Line::intersection(*line_1, *line_2);
                 if (segment.size() > 16000 || intersection.x <= p1.x || intersection.x >= p3.x) flag = true;
                 else {
@@ -363,7 +356,6 @@ namespace Unbounded {
                     }
                 }
                 if (!flag) {
-                    int n_direction = line_1->get_slope() > line_2->get_slope() ? -1 : 1;
                     if (direction != n_direction) {
                         direction = n_direction;
                         degree += 1;
@@ -391,7 +383,6 @@ namespace Unbounded {
                         polynomialModel->fit(bound, segment, l_2->length);
 
                         __yield(compress_data, polynomialModel);
-                        count++;
                     }
 
                     segment = { segment.end() - l_2->length, segment.end() };
@@ -424,8 +415,6 @@ namespace Unbounded {
         clock.tick();
         double avg_time = clock.getAvgDuration() / timeseries.size();
 
-        std::cout << "Number of polynomial: " << count << "\n";
-
         // Profile average latency
         std::cout << std::fixed << "Time taken for each data point (ns): " << avg_time << "\n";
         IterIO timeFile(output+".time", false);
@@ -433,22 +422,26 @@ namespace Unbounded {
         timeFile.close();
     }
 
-    void __decompress_segment(IterIO& file, int interval, time_t basetime, int length, Line& line) {
-        for (int i = 0; i < length; i++) {
+    time_t __decompress_segment(IterIO& file, int interval, time_t basetime, int length, Line& line, int pivot = 0) {
+        for (int i = 0 - pivot; i < length; i++) {
             CSVObj obj;
             obj.pushData(std::to_string(basetime + i * interval));
             obj.pushData(std::to_string(line.subs(i)));
             file.write(&obj);
         }
+
+        return basetime + length * interval;
     }
 
-    void __decompress_segment(IterIO& file, int interval, time_t basetime, int length, Polynomial& polynomial) {
-        for (int i = 0; i < length; i++) {
+    time_t __decompress_segment(IterIO& file, int interval, time_t basetime, int length, Polynomial& polynomial, int pivot = 0) {
+        for (int i = 0 - pivot; i < length - 1; i++) {
             CSVObj obj;
             obj.pushData(std::to_string(basetime + i * interval));
             obj.pushData(std::to_string(polynomial.subs(i)));
             file.write(&obj);
         }
+
+        return basetime + length * interval;
     }
 
     void decompress(std::string input, std::string output, int interval) {
@@ -457,19 +450,27 @@ namespace Unbounded {
         BinObj* compress_data = inputFile.readBin();
 
         time_t basetime = compress_data->getLong();
+        bool isPrevPoly = false;
+        std::pair<long, float> lastPolyRes;
         clock.start();
         while (compress_data->getSize() != 0) {
             unsigned short degree_length = compress_data->getShort();
             int degree = (degree_length >> 14) + 1;
             unsigned short length = degree_length & (0xffff >> 2);
-
             if (degree == 1) {
                 // Linear segment
                 float slope = compress_data->getFloat();
                 float intercept = compress_data->getFloat();
 
                 Line line(slope, intercept);
-                __decompress_segment(outputFile, interval, basetime, length, line);
+                if (isPrevPoly) {
+                    basetime = __decompress_segment(outputFile, interval, basetime, length, line, 1);
+                }
+                else {
+                    basetime = __decompress_segment(outputFile, interval, basetime, length, line);
+                }
+
+                isPrevPoly = false;
             }
             else {
                 float* coefficients = new float[degree+1];
@@ -478,11 +479,17 @@ namespace Unbounded {
                 }
 
                 Polynomial polynomial(degree, coefficients);
-                __decompress_segment(outputFile, interval, basetime, length, polynomial);
+                if (isPrevPoly) {
+                    basetime = __decompress_segment(outputFile, interval, basetime, length, polynomial, 1);
+                }
+                else {
+                    basetime = __decompress_segment(outputFile, interval, basetime, length, polynomial);
+                }
+
                 delete[] coefficients;
+                isPrevPoly = true;
             }
-            
-            basetime += length * interval;
+
             clock.tick();
         }
 
