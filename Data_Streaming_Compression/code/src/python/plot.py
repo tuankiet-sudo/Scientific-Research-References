@@ -8,15 +8,15 @@ ERROR = 4.355
 
 def load(file, index):
     data = []
-    time = []
 
     with open(file, 'r') as file:
         csvFile = csv.reader(file)
         for line in csvFile:
-            time.append(int(line[0]))
-            data.append(float(line[index]))
-        
-    return time, data
+            data.append([int(line[0]), float(line[index])])
+            
+        data = sorted(data, key=lambda a_entry: a_entry[0]) 
+    
+    return np.array(data)[:, 0], np.array(data)[:, 1]
 
 
 def plot(s, e, label, time, data):
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     label, x, y = [], [], []
     for i in range(1, len(sys.argv) - 1, 2):
         time, value = load(sys.argv[i+1], 1)
-
+        
         label.append(sys.argv[i])
         x.append(time)
         y.append(value)

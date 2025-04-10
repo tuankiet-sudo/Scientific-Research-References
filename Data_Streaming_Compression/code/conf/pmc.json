@@ -1,11 +1,11 @@
 {
-    "data": "data/Synthesis/quadratic.csv",
-    "compress": "out/compress/quadratic_pmc.bin",
-    "decompress": "out/decompress/quadratic_pmc.csv",
+    "data": "data/UCR-time-series/Fungi.csv",
+    "compress": "out/compress/fungi_pmc.bin",
+    "decompress": "out/decompress/fungi_pmc.csv",
     "interval": 1,
     "algorithm": {
         "name": "pmc",
-        "error": 20,
+        "error": 4.355,
         "mode": "midrange"
     }
 }

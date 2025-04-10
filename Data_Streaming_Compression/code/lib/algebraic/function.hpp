@@ -66,8 +66,8 @@ class Line {
 // Source for manipulating polynomial function
 class Polynomial {
     public:
-    int degree;
-    float* coefficients;    // coefficient degree starts from 0 
+        int degree;
+        float* coefficients;    // coefficient degree starts from 0 
 
     public:
         Polynomial(int k, const float* coeffs) {
