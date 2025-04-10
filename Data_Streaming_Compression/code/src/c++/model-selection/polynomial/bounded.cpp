@@ -46,7 +46,7 @@ namespace Bounded {
             bool fit(float bound, std::vector<float>& data, int start) override {
                 Point2D p(data.size()-start-1, data.back());
 
-                std::cout << p.x << " " << p.y << "\n";
+                // std::cout << p.x << " " << p.y << "\n";
 
                 if (this->u_cvx.size() == 0) {
                     this->u_cvx.append(Point2D(p.x, p.y-bound));
@@ -208,8 +208,8 @@ namespace Bounded {
             if (this->model != nullptr) delete this->model;
         }
 
-        void updateCRTrigger() {
-            this->triedDegree++;
+        void updateCRTrigger(int triedDegree) {
+            this->triedDegree = triedDegree;
             float curr_cr = (float) (this->childLength + this->length) / (this->childCoeffByte + 6 + this->model->getDegree() * 4);
             this->nextTrigger = std::ceil(curr_cr * (10 + this->triedDegree * 4));
         }
@@ -254,7 +254,7 @@ namespace Bounded {
         IterIO outputFile(output, false);
         BinObj* compress_data = new BinObj;
 
-        time_t basetime = 1;
+        time_t basetime = 1001;
         compress_data->put(basetime);
 
         std::vector<Segment*> segments = {new Segment(0, new LinearModel())};
@@ -270,6 +270,8 @@ namespace Bounded {
                 if(!seg->isComplete) {
                     if (!seg->model->fit(bound, buffer, seg->start)) {
                         seg->isComplete = true;
+                        seg->updateCRTrigger(seg->triedDegree);
+
                         Segment* n_seg = new Segment(buffer.size()-1, new LinearModel());
                         segments.push_back(n_seg);
                         
@@ -289,10 +291,10 @@ namespace Bounded {
                 }
             }
 
-            // for (Segment* seg : segments) {
-            //     std::cout << seg->start << " " << buffer[seg->start] << " " << seg->length << " --- ";
-            // }
-            // std::cout << "\n";
+            for (Segment* seg : segments) {
+                std::cout << seg->start << " " << buffer[seg->start] << " " << seg->length << " --- ";
+            }
+            std::cout << "\n";
 
             for (int i=0; i<segments.size(); i++) {
                 Segment* seg = segments[i];
@@ -309,9 +311,9 @@ namespace Bounded {
                         // std::cout << "fit ok " << segments.size() << "\n";
                     }
 
-                    seg->updateCRTrigger();
+                    seg->updateCRTrigger(seg->triedDegree + 1);
                     seg->updateChildTrigger();
-                    // std::cout << "child " << i << ": " << seg->triedDegree << " " << seg->model->getDegree() << " " << seg->childTrigger << "\n";
+                    std::cout << "child " << i << ": " << seg->triedDegree << " " << seg->model->getDegree() << " " << seg->childTrigger << "\n";
                 }
                 // buffer.push_back(data->get_value());
 
@@ -326,8 +328,8 @@ namespace Bounded {
                         segments.erase(segments.begin() + i + 1, segments.end());
                     }
                     
-                    seg->updateCRTrigger();
-                    // std::cout << "cr " << i << ": " << seg->triedDegree << " " << seg->model->getDegree() << " " << seg->nextTrigger << "\n";
+                    seg->updateCRTrigger(seg->triedDegree + 1);
+                    std::cout << "cr " << i << ": " << seg->triedDegree << " " << seg->model->getDegree() << " " << seg->nextTrigger << "\n";
                 }
                 // Fit success -> break
                 if (!seg->isComplete) break;
