@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
         Unbounded::compress(timeseries, ERROR, OUTPUT);
     }
     else if (ALGO == "bounded") {
-        Bounded::compress(timeseries, ERROR, OUTPUT);
+        Bounded::compress(timeseries, atoi(argv[5]), ERROR, OUTPUT);
     }
 
     timeseries.finalize();

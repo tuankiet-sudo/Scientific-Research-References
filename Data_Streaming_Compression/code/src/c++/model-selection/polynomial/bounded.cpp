@@ -32,11 +32,15 @@ namespace Bounded {
             }
 
             Polynomial* get() override {
-                float slope = (this->u_line->get_slope() + this->l_line->get_slope()) / 2;
-                float intercept = (this->u_line->get_intercept() + this->l_line->get_intercept()) / 2;
+                if (this->u_line != nullptr && this->l_line != nullptr) {
+                    float slope = (this->u_line->get_slope() + this->l_line->get_slope()) / 2;
+                    float intercept = (this->u_line->get_intercept() + this->l_line->get_intercept()) / 2;
+                    
+                    float coefficients[2] = {intercept, slope};
+                    return new Polynomial(1, coefficients);
+                }
                 
-                float coefficients[2] = {intercept, slope};
-                return new Polynomial(1, coefficients);
+                return nullptr;
             }
 
             int getDegree() override {
@@ -46,13 +50,11 @@ namespace Bounded {
             bool fit(float bound, std::vector<float>& data, int start) override {
                 Point2D p(data.size()-start-1, data.back());
 
-                // std::cout << p.x << " " << p.y << "\n";
-
-                if (this->u_cvx.size() == 0) {
+                if (this->u_cvx.size() == 0 && this->u_cvx.size() == 0) {
                     this->u_cvx.append(Point2D(p.x, p.y-bound));
                     this->l_cvx.append(Point2D(p.x, p.y+bound));
                 }
-                else if (this->u_cvx.size() == 1) {
+                else if (this->u_line == nullptr && this->l_line == nullptr) {
                     Line u = Line::line(this->u_cvx.at(0), Point2D(p.x, p.y+bound));
                     Line l = Line::line(this->l_cvx.at(0), Point2D(p.x, p.y-bound));
 
@@ -239,31 +241,32 @@ namespace Bounded {
     };
 
     void __yield(BinObj* obj, Model* model, short length) {
-        short degree_length = length | ((model->getDegree() - 1) << 14) ;
         Polynomial* polynomial = model->get();
+        if (polynomial == nullptr) return;
 
+        short degree_length = length | ((model->getDegree() - 1) << 14) ;
         obj->put(degree_length);
         for (int i = 0; i <= model->getDegree(); i++) {
             obj->put(polynomial->coefficients[i]);
         }
-        std::cout << "yield: " << model->getDegree() << " " << length << "\n";
     }
 
-    void compress(TimeSeries& timeseries, float bound, std::string output) {
+    void compress(TimeSeries& timeseries, int max_degree, float bound, std::string output) {
         clock.start();
         IterIO outputFile(output, false);
         BinObj* compress_data = new BinObj;
 
-        time_t basetime = 1001;
+        Univariate* data = (Univariate*) timeseries.next();
+        time_t basetime = data->get_time();
         compress_data->put(basetime);
 
         std::vector<Segment*> segments = {new Segment(0, new LinearModel())};
-        std::vector<float> buffer;
+        std::vector<float> buffer = {data->get_value()};
+        segments[0]->model->fit(bound, buffer, 0);
+        segments[0]->length++;
 
         while (timeseries.hasNext()) {
-            Univariate* data = (Univariate*) timeseries.next();
-            // std::cout << data->get_time() << " " << data->get_value() << "\n";
-            buffer.push_back(data->get_value());
+            buffer.push_back(((Univariate*) timeseries.next())->get_value());
 
             for (int i=0; i<segments.size(); i++) {
                 Segment* seg = segments[i];
@@ -281,7 +284,7 @@ namespace Bounded {
                 }
                 
                 if ((buffer.size() - seg->start > 16000) || 
-                    (seg->triedDegree == 4 && seg->isComplete)) {
+                    (seg->triedDegree == max_degree && seg->isComplete)) {
                     
                     __yield(compress_data, seg->model, seg->length);
                     for (int j=i+1; j<segments.size(); j++) 
@@ -291,53 +294,44 @@ namespace Bounded {
                 }
             }
 
-            for (Segment* seg : segments) {
-                std::cout << seg->start << " " << buffer[seg->start] << " " << seg->length << " --- ";
-            }
-            std::cout << "\n";
-
             for (int i=0; i<segments.size(); i++) {
                 Segment* seg = segments[i];
                 if (!seg->isComplete) break;
 
                 // Fit because of condition 1
-                // buffer.pop_back();
-                while (seg->childTrigger && seg->triedDegree < 4) {
+                while (seg->childTrigger && seg->triedDegree < max_degree) {
                     PolyModel* n_model = new PolyModel(seg->triedDegree + 1);
                     if (n_model->fit(bound, buffer, seg->start)) {
-                        // std::cout << "fit ok " << i << " " << segments.size() << "\n";
                         seg->updateModel(n_model, buffer.size() - seg->start);
                         segments.erase(segments.begin() + i + 1, segments.end());
-                        // std::cout << "fit ok " << segments.size() << "\n";
                     }
 
                     seg->updateCRTrigger(seg->triedDegree + 1);
                     seg->updateChildTrigger();
-                    std::cout << "child " << i << ": " << seg->triedDegree << " " << seg->model->getDegree() << " " << seg->childTrigger << "\n";
                 }
-                // buffer.push_back(data->get_value());
 
                 // Fit success -> break
                 if (!seg->isComplete) break;
                 
-                // Fit because of condition 2
-                if (buffer.size() - seg->start > seg->nextTrigger && seg->triedDegree < 4) {
-                    PolyModel* n_model = new PolyModel(seg->triedDegree + 1);
-                    if (n_model->fit(bound, buffer, seg->start)) {
-                        seg->updateModel(n_model, buffer.size() - seg->start);
-                        segments.erase(segments.begin() + i + 1, segments.end());
-                    }
+                // // Fit because of condition 2
+                // if (buffer.size() - seg->start > seg->nextTrigger && seg->triedDegree < max_degree) {
+                //     PolyModel* n_model = new PolyModel(seg->triedDegree + 1);
+                //     if (n_model->fit(bound, buffer, seg->start)) {
+                //         seg->updateModel(n_model, buffer.size() - seg->start);
+                //         segments.erase(segments.begin() + i + 1, segments.end());
+                //     }
                     
-                    seg->updateCRTrigger(seg->triedDegree + 1);
-                    std::cout << "cr " << i << ": " << seg->triedDegree << " " << seg->model->getDegree() << " " << seg->nextTrigger << "\n";
-                }
-                // Fit success -> break
-                if (!seg->isComplete) break;
+                //     seg->updateCRTrigger(seg->triedDegree + 1);
+                //     // std::cout << "cr " << i << ": " << seg->triedDegree << " " << seg->model->getDegree() << " " << seg->nextTrigger << "\n";
+                // }
+                // // Fit success -> break
+                // if (!seg->isComplete) break;
             }
         }
 
         for (Segment* seg : segments) {
             __yield(compress_data, seg->model, seg->length);
+            delete seg;
         }
 
         outputFile.writeBin(compress_data);

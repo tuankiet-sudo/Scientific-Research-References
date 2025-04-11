@@ -270,12 +270,10 @@ namespace Unbounded {
         obj->put(line->get_intercept());
     }
 
-    void __yield(BinObj* obj, PolynomialModel* model, int left, int right) {
-        short degree_length = model->length | ((model->degree - 1) << 14) 
-            | (left << 13) | (right << 12);
-
+    void __yield(BinObj* obj, PolynomialModel* model) {
+        short degree_length = model->length | ((model->degree - 1) << 14);
         Polynomial* polynomial = model->getPolynomial();
-        // std::cout << polynomial->str() << " " << left << " " << right << "\n";
+
         obj->put(degree_length);
         for (int i = 0; i <= model->degree; i++) {
             obj->put(polynomial->coefficients[i]);
@@ -353,7 +351,7 @@ namespace Unbounded {
 
                 int n_direction = line_1->get_slope() > line_2->get_slope() ? -1 : 1;
                 Point2D intersection = Line::intersection(*line_1, *line_2);
-                if (segment.size() > 4000 || intersection.x <= p1.x || intersection.x >= p3.x) flag = true;
+                if (segment.size() > 16000 || intersection.x <= p1.x || intersection.x >= p3.x) flag = true;
                 else {
                     flag = __check(
                         line_1->get_slope() * line_2->get_slope() > 0,
@@ -387,34 +385,7 @@ namespace Unbounded {
                         PolynomialModel* polynomialModel = new PolynomialModel(degree);
                         polynomialModel->fit(bound, segment, l_2->length);
                         
-                        int left = 0, right = 0;
-                        if (polynomialModel->degree % 2 == 0) {
-                            if (polynomialModel->getPolynomial()->coefficients[polynomialModel->degree] > 0) {
-                                left = (polynomialModel->getPolynomial()->subs(0) - segment[0].y) > bound;
-                                right = (polynomialModel->getPolynomial()->subs(polynomialModel->length-1)
-                                    - segment[polynomialModel->length-1].y) > bound;
-                                }
-                            else {
-                                left = (segment[0].y - polynomialModel->getPolynomial()->subs(0)) > bound;
-                                right = (segment[polynomialModel->length-1].y -
-                                    polynomialModel->getPolynomial()->subs(polynomialModel->length-1)) > bound;   
-                                }
-        
-                        }
-                        else {
-                            if (polynomialModel->getPolynomial()->coefficients[polynomialModel->degree] > 0) {
-                                left = (segment[0].y - polynomialModel->getPolynomial()->subs(0)) > bound;
-                                right = (polynomialModel->getPolynomial()->subs(polynomialModel->length-1)
-                                    - segment[polynomialModel->length-1].y) > bound;
-                            }
-                            else {
-                                left = (polynomialModel->getPolynomial()->subs(0) - segment[0].y) > bound;
-                                right = (segment[polynomialModel->length-1].y - 
-                                    polynomialModel->getPolynomial()->subs(polynomialModel->length-1)) > bound;
-                            }
-                        }
-                        
-                        __yield(compress_data, polynomialModel, left, right);
+                        __yield(compress_data, polynomialModel);
                     }
 
                     segment = { segment.end() - l_2->length, segment.end() };
@@ -454,181 +425,21 @@ namespace Unbounded {
         timeFile.close();
     }
 
-    struct Model {
-        int length = 0;
-        Line* line = nullptr;
-        Polynomial* polynomial = nullptr;
-        int left = -1;
-        int right = -1;
-        int sleft = 0;
-        int sright = 0;
-        int aleft = 0;
-        int aright = 0;
-
-        ~Model() {
-            if (this->line != nullptr) delete this->line;
-            if (this->polynomial != nullptr) delete this->polynomial;
+    void __decompress_segment(IterIO& file, int interval, time_t basetime, int length, Line& line) {
+        for (int i = 0; i < length; i++) {
+            CSVObj obj;
+            obj.pushData(std::to_string(basetime + i * interval));
+            obj.pushData(std::to_string(line.subs(i)));
+            file.write(&obj);
         }
-
-        Model(int length, Line* line) {
-            this->length = length;
-            this->line = line;    
-        }
-
-        Model(int length, Polynomial* polynomial, int left, int right) {
-            this->length = length;
-            this->polynomial = polynomial;
-            this->left = left;
-            this->right = right;
-        }
-
-        bool isPolynomial() {
-            return this->polynomial != nullptr;
-        }
-
-        float subs(float x) {
-            if (this->line != nullptr) return this->line->subs(x);
-            else return this->polynomial->subs(x);
-        }
-    };
-
-
-    time_t __decompress_segment(IterIO& file, int interval, time_t basetime, Model* model) {
-        if (model->isPolynomial()) {
-            Polynomial* polynomial = model->polynomial;
-            for (int i = model->sleft; i < model->length-model->sright; i++) {
-                CSVObj obj;
-                obj.pushData(std::to_string(basetime + i * interval));
-                obj.pushData(std::to_string(polynomial->subs(i)));
-                file.write(&obj);
-            }
-
-            if (model->aleft) {
-                CSVObj obj;
-                obj.pushData(std::to_string(basetime - interval));
-                obj.pushData(std::to_string(polynomial->subs(-1)));
-                file.write(&obj);
-            }
-            if (model->aright) {
-                CSVObj obj;
-                obj.pushData(std::to_string(basetime + model->length * interval));
-                obj.pushData(std::to_string(polynomial->subs(model->length)));
-                file.write(&obj);
-            }
-        }
-        else {
-            Line* line = model->line;
-            for (int i = 0; i < model->length; i++) {
-                CSVObj obj;
-                obj.pushData(std::to_string(basetime + i * interval));
-                obj.pushData(std::to_string(line->subs(i)));
-                file.write(&obj);
-            }
-
-            if (model->aleft) {
-                CSVObj obj;
-                obj.pushData(std::to_string(basetime - interval));
-                obj.pushData(std::to_string(line->subs(-1)));
-                file.write(&obj);
-            }
-            if (model->aright) {
-                CSVObj obj;
-                obj.pushData(std::to_string(basetime + model->length * interval));
-                obj.pushData(std::to_string(line->subs(model->length)));
-                file.write(&obj);
-            }
-        }
-
-        return basetime + model->length * interval;
-    }
-    
-    Model* extract(BinObj* compress_data) {
-        Model* model;
-        unsigned short degree_length = compress_data->getShort();
-        int degree = (degree_length >> 14) + 1;
-        unsigned short length = degree_length & (0xffff >> 4);
-        if (degree == 1) {
-            // Linear segment
-            float slope = compress_data->getFloat();
-            float intercept = compress_data->getFloat();
-
-            Line* line = new Line(slope, intercept);
-            model = new Model(length, line);
-
-        }
-        else {
-            float* coefficients = new float[degree+1];
-            for (int i = 0; i <= degree; i++) {
-                coefficients[i] = compress_data->getFloat();
-            }
-
-            int left = (degree_length & 0x3fff) >> 13;
-            int right = (degree_length & 0x1fff) >> 12;
-
-            Polynomial* polynomial = new Polynomial(degree, coefficients);
-            model = new Model(length, polynomial, left, right);
-            delete[] coefficients;
-        }
-
-        return model;
     }
 
-    void verify(Model* m_1, Model* m_2) {
-        if (m_1->isPolynomial() && m_1->right != 0) {
-            int degree = m_1->polynomial->degree;
-            float a = m_1->polynomial->coefficients[degree];
-
-            if (a > 0) {
-                if (m_2->subs(-1) < m_1->subs(m_1->length-1) &&
-                    m_2->subs(-1) > m_2->subs(m_1->length-2)) {
-                        m_1->sright = 1;
-                        m_2->aleft = 1;
-                }
-            } 
-            else {
-                if (m_2->subs(-1) > m_1->subs(m_1->length-1) &&
-                    m_2->subs(-1) < m_2->subs(m_1->length-2)) {
-                        m_1->sright = 1;
-                        m_2->aleft = 1;
-                }
-            }
-        }
-        if (m_2->isPolynomial() && m_2->left != 0) {
-            int degree = m_2->polynomial->degree;
-            float a = m_2->polynomial->coefficients[degree];
-
-            if (degree % 2 == 0) {
-                if (a > 0) {
-                    if (m_2->subs(0) > m_1->subs(m_1->length) &&
-                        m_2->subs(1) < m_1->subs(m_1->length)) {
-                            m_2->sleft = 1;
-                            m_1->aright = 1;
-                    }
-                } 
-                else {
-                    if (m_2->subs(0) < m_1->subs(m_1->length) &&
-                        m_2->subs(1) > m_1->subs(m_1->length)) {
-                            m_2->sleft = 1;
-                            m_1->aright = 1;
-                    }
-                }
-            }
-            else {
-                if (a > 0) {
-                    if (m_2->subs(0) < m_1->subs(m_1->length) &&
-                        m_2->subs(1) > m_1->subs(m_1->length)) {
-                            m_2->sleft = 1;
-                            m_1->aright = 1;
-                    }
-                } 
-                else {
-                    if (m_2->subs(0) > m_1->subs(m_1->length) &&
-                        m_2->subs(1) < m_1->subs(m_1->length)) {
-                            m_2->sleft = 1;
-                            m_1->aright = 1;
-                    }
-                }
-            }
+    void __decompress_segment(IterIO& file, int interval, time_t basetime, int length, Polynomial& polynomial) {
+        for (int i = 0; i < length; i++) {
+            CSVObj obj;
+            obj.pushData(std::to_string(basetime + i * interval));
+            obj.pushData(std::to_string(polynomial.subs(i)));
+            file.write(&obj);
         }
     }
 
@@ -636,26 +447,39 @@ namespace Unbounded {
         IterIO inputFile(input, true, true);
         IterIO outputFile(output, false);
         BinObj* compress_data = inputFile.readBin();
-        
+
         time_t basetime = compress_data->getLong();
         clock.start();
-        Model* m_1 = extract(compress_data);
-        Model* m_2 = nullptr; 
         while (compress_data->getSize() != 0) {
-            m_2 = extract(compress_data);
-            verify(m_1, m_2);
-            basetime = __decompress_segment(outputFile, interval, basetime, m_1);
+            unsigned short degree_length = compress_data->getShort();
+            int degree = (degree_length >> 14) + 1;
+            unsigned short length = degree_length & (0xffff >> 2);
+
+            if (degree == 1) {
+                float slope = compress_data->getFloat();
+                float intercept = compress_data->getFloat();
+                
+                Line line(slope, intercept);
+                __decompress_segment(outputFile, interval, basetime, length, line);
+            }
+            else {
+                float* coefficients = new float[degree+1];
+                for (int i = 0; i <= degree; i++) {
+                    coefficients[i] = compress_data->getFloat();
+                }
+
+                Polynomial polynomial(degree, coefficients);
+                __decompress_segment(outputFile, interval, basetime, length, polynomial);
+                delete[] coefficients;
+            }
             
-            delete m_1;
-            m_1 = m_2;
+            basetime += length * interval;
             clock.tick();
         }
 
-        basetime = __decompress_segment(outputFile, interval, basetime, m_2);
-
+        delete compress_data;
         inputFile.close();
         outputFile.close();
-        delete compress_data; delete m_2;
 
         // Profile average latency
         std::cout << std::fixed << "Time taken for each segment (ns): " << clock.getAvgDuration() << "\n";

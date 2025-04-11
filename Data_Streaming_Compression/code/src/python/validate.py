@@ -50,7 +50,7 @@ def validate(algo):
             exit(Error.MISSING_PARAM.value)
 
     elif algo["name"] == "bounded":
-        if "error" not in algo:
+        if "error" not in algo or "degree" not in algo:
             exit(Error.MISSING_PARAM.value)
 
     else:
@@ -80,11 +80,10 @@ def parse(conf):
         print("{} {} {}".format(algo["name"], algo["error"], algo["n_segment"]))
     elif algo["name"] == "smart-grid-compression":
         print("{} {} {}".format(algo["name"], algo["error"], algo["degree"]))
-    
     elif algo["name"] == "unbounded":
         print("{} {}".format(algo["name"], algo["error"]))
     elif algo["name"] == "bounded":
-        print("{} {}".format(algo["name"], algo["error"]))
+        print("{} {} {}".format(algo["name"], algo["error"], algo["degree"]))
         
 
     

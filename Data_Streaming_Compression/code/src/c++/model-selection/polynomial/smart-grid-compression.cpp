@@ -418,7 +418,7 @@ namespace SmartGridCompression {
         return index;
     }
 
-    void compress(TimeSeries& timeseries, int degree, float bound, std::string output) {
+    void compress(TimeSeries& timeseries, int max_degree, float bound, std::string output) {
         clock.start();
         IterIO outputFile(output, false);
         BinObj* compress_data = new BinObj;
@@ -429,7 +429,7 @@ namespace SmartGridCompression {
         segment.push_back(Point2D(0, d->get_value()));
 
         std::vector<Model*> models;
-        for (int i=0; i<=degree; i++) {
+        for (int i=0; i<=max_degree; i++) {
             if (i == 0) models.push_back(new ConstantModel());
             else if (i == 1) models.push_back(new LinearModel());
             else models.push_back(new PolynomialModel(i));
@@ -445,7 +445,7 @@ namespace SmartGridCompression {
             }
 
             if (segment.size() > 1) {
-                for (int k=0; k<=degree; k++) {
+                for (int k=0; k<=max_degree; k++) {
                     while (__approxSuccess(k, bound, models[k], segment) && timeseries.hasNext() && segment.size() < 65000) {
                         segment.push_back(Point2D(segment.size(), ((Univariate*) timeseries.next())->get_value()));
                     }
@@ -462,13 +462,13 @@ namespace SmartGridCompression {
                 for (int i=0; i<segment.size(); i++) {
                     segment[i].x = i;
                 }
-                for (int i=0; i<=degree; i++) {
+                for (int i=0; i<=max_degree; i++) {
                     models[i]->clear();
                 }                
             }
         }
 
-        for (int i=0; i<=degree; i++) {
+        for (int i=0; i<=max_degree; i++) {
             delete models[i];
         }
 

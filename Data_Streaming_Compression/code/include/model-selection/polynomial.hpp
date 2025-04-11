@@ -12,7 +12,7 @@
 namespace SmartGridCompression {
     // Source paper: A time-series compression technique and its application to the smart grid
     // Source path: src/model-selection/polynomial/smart-grid-compression.cpp
-    void compress(TimeSeries& timeseries, int degree, float bound, std::string output);
+    void compress(TimeSeries& timeseries, int max_degree, float bound, std::string output);
     void decompress(std::string input, std::string output, int interval);
 };
 
@@ -24,6 +24,6 @@ namespace Unbounded {
 
 namespace Bounded {
     // Source path: src/model-selection/polynomial/bounded.cpp
-    void compress(TimeSeries& timeseries, float bound, std::string output);
+    void compress(TimeSeries& timeseries, int max_degree, float bound, std::string output);
     void decompress(std::string input, std::string output, int interval);
 };
