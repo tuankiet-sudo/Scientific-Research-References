@@ -1,2 +1,4 @@
 **/.vscode/
 *.DS_Store
+Data_Streaming_Compression/code/bin/
+Data_Streaming_Compression/code/out/
