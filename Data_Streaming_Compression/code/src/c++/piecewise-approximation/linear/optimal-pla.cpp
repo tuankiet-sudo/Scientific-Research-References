@@ -35,7 +35,6 @@ namespace OptimalPLA {
                 l_cvx.append(Point2D(1, p.y+bound));
             }
             else {
-                std::cout << p.x << " " << p.y << " " << u_cvx.size() << " " << l_cvx.size() << "\n";
                 if (length > 65000 || l_line.subs(p.x) > p.y + bound || p.y - bound > u_line.subs(p.x)) {
                     __yield(compress_data, length, (u_line.get_slope()+l_line.get_slope())/2, (u_line.get_intercept()+l_line.get_intercept())/2);
 
@@ -114,12 +113,9 @@ namespace OptimalPLA {
         IterIO outputFile(output, false);
         BinObj* compress_data = inputFile.readBin();
 
-        int count = 0;
-
         time_t basetime = compress_data->getLong();
         while (compress_data->getSize() != 0) {
             clock.start();
-            count++;
             unsigned short length = compress_data->getShort();
             float slope = compress_data->getFloat();
             float intercept = compress_data->getFloat();

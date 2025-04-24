@@ -1,10 +1,10 @@
 {
-    "data": "data/UCR-time-series/Fungi.csv",
-    "compress": "out/compress/fungi_optimal-pla.bin",
-    "decompress": "out/decompress/fungi_optimal-pla.csv",
+    "data": "data/UCR-time-series/StarLightCurves.csv",
+    "compress": "out/compress/star_optimal-pla.bin",
+    "decompress": "out/decompress/star_optimal-pla.csv",
     "interval": 1,
     "algorithm": {
         "name": "optimal-pla",
-        "error": 4.355
+        "error": 0.407
     }
 }

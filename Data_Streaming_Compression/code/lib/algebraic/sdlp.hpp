@@ -28,9 +28,9 @@
 #ifndef ALGEBRAIC_SDLP_HPP
 #define ALGEBRAIC_SDLP_HPP
 
-#include <eigen/Eigen>
 #include <cmath>
 #include <random>
+#include <eigen/Eigen>
 
 namespace sdlp
 {

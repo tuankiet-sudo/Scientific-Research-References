@@ -1,5 +1,6 @@
 #include <map>
 #include <iostream>
+#include <eigen/Eigen>
 
 #include "system/io.hpp"
 #include "system/monitor.hpp"

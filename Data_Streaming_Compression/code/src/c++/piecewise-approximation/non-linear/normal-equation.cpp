@@ -19,6 +19,7 @@ namespace NormalEquation {
 
     Clock clock;
     std::map<int, Matrix<double>*> cache;
+    // std::map<int, Eigen::MatrixXd> cache;
 
     void __yield(BinObj* obj, short length, Polynomial* model) {
         obj->put(length);
@@ -27,6 +28,50 @@ namespace NormalEquation {
         }
     }
 
+    // // Using eigen library
+    // Polynomial* __calPolynomial(std::vector<Point2D>& window, int degree) {
+    //         int N = window.size();
+    //         int n = degree;
+    //         Eigen::VectorXd theta;
+
+    //         if (cache.find(window.size()) == cache.end()) {
+    //             Eigen::MatrixXd X(N, n + 1);
+    //             Eigen::VectorXd y(N);
+
+    //             for (int i = 0; i < N; i++) {
+    //                 for (int k=0; k<n+1; k++) {
+    //                     X(i, k) = pow(i, k);
+    //                 } 
+    //                 y(i) = window[i].y;
+    //             }
+
+    //             Eigen::MatrixXd X_T_X_inv_X_T = (X.transpose() * X).inverse() * X.transpose();
+    //             cache.insert({window.size(), X_T_X_inv_X_T});
+
+    //             theta = X_T_X_inv_X_T * y;
+    //         }
+    //         else {
+    //             Eigen::VectorXd y(N);
+    //             for (int i=0; i<N; i++) {
+    //                 y(i) = window[i].y;
+    //             }
+
+    //             Eigen::MatrixXd X_T_X_inv_X_T = cache.find(window.size())->second;
+    //             theta = X_T_X_inv_X_T * y;
+    //         }
+            
+    //         float* coeffs = new float[n+1];
+    //         for (int i = 0; i < n+1; ++i) {
+    //             coeffs[i] = theta[i];
+    //         }
+
+    //         Polynomial* model = new Polynomial(degree, coeffs);
+            
+    //         delete coeffs;
+    //         return model;
+    // }
+
+    // Using our own matrix implementation
     Polynomial* __calPolynomial(std::vector<Point2D>& window, int degree) {
             Matrix<double>* theta = nullptr;
             if (cache.find(window.size()) == cache.end()) {
@@ -141,7 +186,7 @@ namespace NormalEquation {
             length++;
         }
 
-        for (auto& entry : cache) delete entry.second;
+        for (auto& entry : cache) delete entry.second;      // comment this line if using eigen library
         outputFile.writeBin(compress_data);
         outputFile.close();
         delete compress_data;

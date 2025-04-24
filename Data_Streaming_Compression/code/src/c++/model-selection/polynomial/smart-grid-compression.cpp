@@ -446,11 +446,11 @@ namespace SmartGridCompression {
 
             if (segment.size() > 1) {
                 for (int k=0; k<=max_degree; k++) {
-                    while (__approxSuccess(k, bound, models[k], segment) && timeseries.hasNext() && segment.size() < 65000) {
+                    while (__approxSuccess(k, bound, models[k], segment) && timeseries.hasNext() && segment.size() < 16000) {
                         segment.push_back(Point2D(segment.size(), ((Univariate*) timeseries.next())->get_value()));
                     }
 
-                    if (!timeseries.hasNext() || segment.size() >= 65000) {
+                    if (!timeseries.hasNext() || segment.size() >= 16000) {
                         break;
                     }
                 }

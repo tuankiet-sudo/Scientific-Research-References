@@ -277,7 +277,7 @@ namespace Bounded {
 
                         Segment* n_seg = new Segment(buffer.size()-1, new LinearModel());
                         segments.push_back(n_seg);
-                        
+
                         for (int j=0; j<i; j++) segments[j]->setChildTrigger(seg);
                     }
                     else seg->length++;
