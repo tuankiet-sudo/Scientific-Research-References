@@ -2,6 +2,8 @@
 
 namespace Bounded {
 
+    int total = 0;
+    int count = 0;
     Clock clock;
 
     class Model {
@@ -9,6 +11,7 @@ namespace Bounded {
             virtual Polynomial* get() = 0;
             virtual int getDegree () = 0;        
             virtual bool fit(float bound, std::vector<float>& data, int start) = 0;
+            virtual bool test(float bound, std::vector<float>& data, int start) = 0;
     };
 
     class LinearModel : public Model {
@@ -45,6 +48,10 @@ namespace Bounded {
 
             int getDegree() override {
                 return 1;
+            }
+
+            bool test(float bound, std::vector<float>& data, int start) override {
+                return true;
             }
 
             bool fit(float bound, std::vector<float>& data, int start) override {
@@ -136,11 +143,20 @@ namespace Bounded {
                 return this->degree;
             }
 
+            bool test(float bound, std::vector<float>& data, int start) override {
+                if (std::abs(this->func->subs(data.size()-start-1) - data.back()) <= bound) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+
             bool fit(float bound, std::vector<float>& data, int start) override {
                 if (this->func != nullptr) {
                     if (std::abs(this->func->subs(data.size()-start-1) - data.back()) <= bound) {
                         return true;
-                    }
+                    }  
                 }
 
                 Eigen::VectorXd x(degree + 2);                    
@@ -165,7 +181,7 @@ namespace Bounded {
                     b(2*i+1) = data[i+start];
                 }
         
-                double minobj = sdlp::linprog(c, A, b, x); 
+                double minobj = sdlp::linprog(c, A, b, x);
                 
                 if (minobj <= bound) {
                     float* coefficients = new float[degree+1];
@@ -176,10 +192,10 @@ namespace Bounded {
                     if (this->func != nullptr) delete this->func;
                     this->func = new Polynomial(degree, coefficients);
                     delete coefficients;
-        
+                    
                     return true;
                 }
-
+                
                 return false;
             }
     };
@@ -188,10 +204,11 @@ namespace Bounded {
         int start;
         short length;
         int triedDegree;
+        int extreme;
+
         int childLength;
         int childCoeffByte;
-        bool childTrigger;
-        int nextTrigger;
+
         bool isComplete;
         Model* model;
 
@@ -199,9 +216,11 @@ namespace Bounded {
             this->start = start;
             this->length = 0;
             this->triedDegree = 1;
+            this->extreme = 0;
+
             this->childLength = 0;
             this->childCoeffByte = 0;
-            this->childTrigger = false;
+
             this->model = model; 
             this->isComplete = false;
         }
@@ -210,26 +229,19 @@ namespace Bounded {
             if (this->model != nullptr) delete this->model;
         }
 
-        void updateCRTrigger(int triedDegree) {
-            this->triedDegree = triedDegree;
-            float curr_cr = (float) (this->childLength + this->length) / (this->childCoeffByte + 6 + this->model->getDegree() * 4);
-            this->nextTrigger = std::ceil(curr_cr * (10 + this->triedDegree * 4));
-        }
-
-        void setChildTrigger(Segment* child) {
+        void updateChild(Segment* child) {
             this->childLength += child->length;
             this->childCoeffByte += 6 + child->model->getDegree() * 4;
-            this->updateChildTrigger();
         }
 
-        void updateChildTrigger() {
-            this->childTrigger = 
-                (this->childCoeffByte + 6 + this->model->getDegree() * 4) > 
-                (this->triedDegree * 4 + 10);
+        bool trigger() {
+            return (this->triedDegree * 4 + 10) <
+                (this->childCoeffByte + 6 + this->model->getDegree() * 4);
         }
 
         void updateModel(Model* model, short length) {
             this->length = length;
+            this->triedDegree = model->getDegree();
             this->childLength = 0;
             this->childCoeffByte = 0;
             this->isComplete = false;
@@ -251,6 +263,42 @@ namespace Bounded {
         }
     }
 
+    Line translate(float slp, float intercept, int step) {
+        return Line(slp, intercept-slp*step);
+    }
+
+    int __check(Point2D& p1, Point2D& p2, Point2D& p3, Point2D& p4, Point2D& p5, Line& line_1, Line& line_2, float bound) {
+        if (p2.x <= p1.x || p2.x >= p3.x) return false;
+        else {
+            Eigen::MatrixXd A(3, 3);
+            A << p1.x*p1.x, p1.x, 1,
+                p2.x*p2.x, p2.x, 1,
+                p3.x*p3.x, p3.x, 1;
+        
+            Eigen::VectorXd b(3);
+            b << p1.y, p2.y, p3.y;
+        
+            Eigen::VectorXd x = A.colPivHouseholderQr().solve(b);
+
+            float extreme_x = (-x(1)) / (2*x(0));
+            float extreme_y = x(0)*extreme_x*extreme_x + x(1)*extreme_x + x(2);
+
+            if (line_1.get_slope() * line_2.get_slope() > 0) {
+                if (extreme_x > p1.x && extreme_x < p3.x) return 0;
+                else if (std::abs(x(0)*p4.x*p4.x + x(1)*p4.x + x(2) - p4.y) > bound
+                    || std::abs(x(0)*p5.x*p5.x + x(1)*p5.x + x(2) - p5.y) > bound) return 0;
+            }
+            else {
+                if (extreme_x >= p2.x && std::abs(extreme_y - line_2.subs(extreme_x)) > bound) return 1; 
+                else if (extreme_x < p2.x && std::abs(extreme_y - line_1.subs(extreme_x)) > bound) return 1;
+                else if (std::abs(x(0)*p4.x*p4.x + x(1)*p4.x + x(2) - p4.y) > bound
+                    || std::abs(x(0)*p5.x*p5.x + x(1)*p5.x + x(2) - p5.y) > bound) return 1;
+            }
+            
+            return (line_1.get_slope() * line_2.get_slope() > 0) ? 2 : 3;
+        }
+    }
+
     void compress(TimeSeries& timeseries, int max_degree, float bound, std::string output) {
         clock.start();
         IterIO outputFile(output, false);
@@ -265,20 +313,25 @@ namespace Bounded {
         segments[0]->model->fit(bound, buffer, 0);
         segments[0]->length++;
 
+        int trigger_index = -1;
         while (timeseries.hasNext()) {
             buffer.push_back(((Univariate*) timeseries.next())->get_value());
 
             for (int i=0; i<segments.size(); i++) {
                 Segment* seg = segments[i];
                 if(!seg->isComplete) {
-                    if (!seg->model->fit(bound, buffer, seg->start)) {
+                    bool flag = (seg->model->getDegree() > 1)
+                        ? seg->model->test(bound, buffer, seg->start)
+                        : seg->model->fit(bound, buffer, seg->start);
+                    
+                    if (!flag) {
                         seg->isComplete = true;
-                        seg->updateCRTrigger(seg->triedDegree);
 
                         Segment* n_seg = new Segment(buffer.size()-1, new LinearModel());
                         segments.push_back(n_seg);
 
-                        for (int j=0; j<i; j++) segments[j]->setChildTrigger(seg);
+                        trigger_index = i;
+                        for (int j=0; j<i; j++) segments[j]->updateChild(seg);
                     }
                     else seg->length++;
                 }
@@ -294,39 +347,72 @@ namespace Bounded {
                 }
             }
 
-            for (int i=0; i<segments.size(); i++) {
+            for (int i=0; i<trigger_index; i++) {
                 Segment* seg = segments[i];
-                if (!seg->isComplete) break;
+                
+                int flag = -1;
+                if (seg->model->getDegree() == 1 && segments[i+1]->model->getDegree() == 1) {
+                    Segment* s1 = segments[i];
+                    Segment* s2 = segments[i+1];
+                    
+                    Line line_1(s1->model->get()->coefficients[1], s1->model->get()->coefficients[0]);
+                    Line line_2 = translate(s2->model->get()->coefficients[1], s2->model->get()->coefficients[0], s1->length);
+
+                    Point2D p1(0, line_1.subs(0));
+                    Point2D p2 = Line::intersection(line_1, line_2);
+                    Point2D p3(s1->length + s2->length - 1, line_2.subs(s1->length + s2->length - 1));
+                    Point2D p4(s1->length-1, line_1.subs(s1->length-1));
+                    Point2D p5(s1->length, line_2.subs(s2->start));
+                    
+                    flag = __check(p1, p2, p3, p4, p5, line_1, line_2, bound);
+                    if (flag == 0) seg->triedDegree = max_degree;
+                    else if (flag == 1) seg->triedDegree = 2;
+                }
 
                 // Fit because of condition 1
-                while (seg->childTrigger && seg->triedDegree < max_degree) {
-                    PolyModel* n_model = new PolyModel(seg->triedDegree + 1);
-                    if (n_model->fit(bound, buffer, seg->start)) {
-                        seg->updateModel(n_model, buffer.size() - seg->start);
-                        segments.erase(segments.begin() + i + 1, segments.end());
+                while (seg->trigger() && seg->triedDegree < max_degree) {
+                    PolyModel* n_model = new PolyModel(seg->triedDegree+1);
+                    if (n_model->getDegree() > 2) {
+                        int d = (seg->model->getDegree() % 2 == 0) ? -1 : 1;
+                        int a = (seg->model->get()->coefficients[seg->model->getDegree()] > 0) ? -1 : 1;
+                        int e = (seg->extreme % 2 == 0) ? -1 : 1;
+
+                        if (d * a * e == -1) {
+                            // slope decrease
+                            float p1 = seg->model->get()->subs(seg->length);
+                            float p2 = segments[i+1]->model->get()->subs(0);
+                            if (buffer[seg->start+seg->length-1] <= seg->model->get()->subs(seg->length-1) && p2 > p1) {
+                                seg->triedDegree++;
+                                continue;
+                            }
+                        } 
+                        else {
+                            // slope increase
+                            float p1 = seg->model->get()->subs(seg->length);
+                            float p2 = segments[i+1]->model->get()->subs(0);
+                            if (buffer[seg->start+seg->length-1] >= seg->model->get()->subs(seg->length-1) && p1 > p2) {
+                                seg->triedDegree++;
+                                continue;
+                            }   
+
+                        }
                     }
 
-                    seg->updateCRTrigger(seg->triedDegree + 1);
-                    seg->updateChildTrigger();
+                    if (n_model->fit(bound, buffer, seg->start)) {
+                        if (flag == 3) seg->extreme++;
+                        seg->updateModel(n_model, buffer.size() - seg->start);
+                        segments.erase(segments.begin() + i + 1, segments.end());
+                        break;
+                    }
+                    else {
+                        seg->triedDegree++;
+                    }
                 }
 
                 // Fit success -> break
                 if (!seg->isComplete) break;
-                
-                // // Fit because of condition 2
-                // if (buffer.size() - seg->start > seg->nextTrigger && seg->triedDegree < max_degree) {
-                //     PolyModel* n_model = new PolyModel(seg->triedDegree + 1);
-                //     if (n_model->fit(bound, buffer, seg->start)) {
-                //         seg->updateModel(n_model, buffer.size() - seg->start);
-                //         segments.erase(segments.begin() + i + 1, segments.end());
-                //     }
-                    
-                //     seg->updateCRTrigger(seg->triedDegree + 1);
-                //     // std::cout << "cr " << i << ": " << seg->triedDegree << " " << seg->model->getDegree() << " " << seg->nextTrigger << "\n";
-                // }
-                // // Fit success -> break
-                // if (!seg->isComplete) break;
             }
+            trigger_index = -1;
         }
 
         for (Segment* seg : segments) {
@@ -340,6 +426,8 @@ namespace Bounded {
         
         clock.tick();
         double avg_time = clock.getAvgDuration() / timeseries.size();
+
+        std::cout << total << " " << count << "\n";
 
         // Profile average latency
         std::cout << std::fixed << "Time taken for each data point (ns): " << avg_time << "\n";
@@ -385,6 +473,8 @@ namespace Bounded {
         delete compress_data;
         inputFile.close();
         outputFile.close();
+
+        std::cout << total << " " << count << "\n";
 
         // Profile average latency
         std::cout << std::fixed << "Time taken for each segment (ns): " << clock.getAvgDuration() << "\n";

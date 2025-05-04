@@ -280,7 +280,7 @@ namespace Unbounded {
         }
     }
 
-    bool __check(bool flag, float bound, Point2D& p1, Point2D& p2, Point2D& p3) {
+    bool __check(Line* line_1, Line* line_2, float bound, Point2D& p1, Point2D& p2, Point2D& p3, Point2D& p4, Point2D& p5) {
         Eigen::MatrixXd A(3, 3);
         A << p1.x*p1.x, p1.x, 1,
              p2.x*p2.x, p2.x, 1,
@@ -294,11 +294,12 @@ namespace Unbounded {
         float extreme_x = (-x(1)) / (2*x(0));
         float extreme_y = x(0)*extreme_x*extreme_x + x(1)*extreme_x + x(2);
 
-        if (flag) {
+        if (line_1->get_slope() * line_2->get_slope() > 0) {
             if (extreme_x > p1.x && extreme_x < p3.x) return true;
         }
         else {  
-            if (std::abs(extreme_y - p2.y) > bound) return true;
+            if (extreme_x >= p2.x && std::abs(extreme_y - p2.y) > bound) return true; 
+            else if (extreme_x < p2.x && std::abs(extreme_y - line_1->subs(extreme_x)) > bound) return true;
         }
         
         return false;
@@ -312,8 +313,7 @@ namespace Unbounded {
         Univariate* d = (Univariate*) timeseries.next();
         compress_data->put(d->get_time());
         std::vector<Point2D> segment = {Point2D(0, d->get_value())};
-        Point2D p1(0, d->get_value());
-        Point2D p2(-1, -1); Point2D p3(-1, -1);
+        Point2D p1(-1, -1); Point2D p2(-1, -1); Point2D p3(-1, -1);
         
         int phase = 1;
         LinearModel* l_1 = new LinearModel(); l_1->fit(bound, p1);
@@ -331,6 +331,7 @@ namespace Unbounded {
 
                 if (l_1->isComplete) {
                     phase = 2;
+                    p1 = Point2D(0, l_1->getLine()->subs(0));
                     p2 = Point2D(p.x, p.y);
                     l_2->fit(bound, p);
                 }
@@ -351,11 +352,13 @@ namespace Unbounded {
 
                 int n_direction = line_1->get_slope() > line_2->get_slope() ? -1 : 1;
                 Point2D intersection = Line::intersection(*line_1, *line_2);
+                Point2D e1(l_1->length-1, line_1->subs(l_1->length-1));
+                Point2D s2(l_1->length, line_2->subs(l_1->length));
+
                 if (segment.size() > 16000 || intersection.x <= p1.x || intersection.x >= p3.x) flag = true;
                 else {
                     flag = __check(
-                        line_1->get_slope() * line_2->get_slope() > 0,
-                        bound, p1, intersection, p3
+                        line_1, line_2, bound, p1, intersection, p3, e1, s2
                     );
                 }
                 if (!flag) {
@@ -372,7 +375,7 @@ namespace Unbounded {
                         l_2 = new LinearModel();
                         l_2->fit(bound, p);
 
-                        p1 = Point2D(p2.x, p2.y);
+                        p1 = Point2D(p2.x, l_1->getLine()->subs(p2.x));
                         p2 = Point2D(p.x, p.y);
                     }
                 }
@@ -393,7 +396,7 @@ namespace Unbounded {
                     delete l_1; l_1 = l_2; l_1->translation(p2);
 
                     phase = 2;
-                    p1 = Point2D(0, p2.y);
+                    p1 = Point2D(0, l_1->getLine()->subs(0));
                     p2 = Point2D(segment.size(), p.y);
                     p = Point2D(segment.size(), p.y);
 

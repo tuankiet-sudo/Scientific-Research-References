@@ -26,22 +26,30 @@ def load(origin, approx):
 
 
 def load_monitor(compress, decompress):
-    c_data = []
-    d_data = []
+    c_max_vsz, c_max_rss = float("-inf"), float("-inf")
+    d_max_vsz, d_max_rss = float("-inf"), float("-inf")
     
     with open(compress, 'r') as file:
         csvFile = csv.reader(file)
         next(csvFile, None)
         for line in csvFile:
-            c_data.append([int(line[2]), int(line[3])])
+            c_vsz = int(line[2])
+            c_rss = int(line[3])
+
+            c_max_vsz = c_max_vsz if c_max_vsz > c_vsz else c_vsz
+            c_max_rss = c_max_rss if c_max_rss > c_rss else c_rss
                     
     with open(decompress, 'r') as file:
         csvFile = csv.reader(file)
         next(csvFile, None)
         for line in csvFile:
-            d_data.append([int(line[2]), int(line[3])])
+            d_vsz = int(line[2])
+            d_rss = int(line[3])
+
+            d_max_vsz = d_max_vsz if d_max_vsz > d_vsz else d_vsz
+            d_max_rss = d_max_rss if d_max_rss > d_rss else d_rss
         
-    return np.array(c_data), np.array(d_data)
+    return c_max_vsz, c_max_rss, d_max_vsz, d_max_vsz
 
 
 def rmse(origin_data, approx_data):
@@ -77,7 +85,7 @@ if __name__ == "__main__":
     D_MONITOR = DECOMPRESS + ".mon"
     
     origin_data, approx_data = load(DATA, DECOMPRESS)
-    c_data, d_data = load_monitor(C_MONITOR, D_MONITOR)
+    c_max_vsz, c_max_rss, d_max_vsz, d_max_vsz = load_monitor(C_MONITOR, D_MONITOR)
     count_min = min(origin_data.shape[0], approx_data.shape[0])
     
     origin_data = origin_data[:count_min]
@@ -89,7 +97,7 @@ if __name__ == "__main__":
     print("MAE:", mae(origin_data, approx_data))
     print("Max_E:", maxdiff(origin_data, approx_data))
     print("Min_E:", mindiff(origin_data, approx_data))
-    print("c_max_vsz:", np.max(c_data[:,0]))
-    print("c_max_rss:", np.max(c_data[:,1]))
-    print("d_max_vsz:", np.max(d_data[:,0]))
-    print("d_max_rss:", np.max(d_data[:,1]))
+    print("c_max_vsz:", c_max_vsz/1024/1024)
+    print("c_max_rss:", c_max_rss/1024/1024)
+    print("d_max_vsz:", d_max_vsz/1024/1024)
+    print("d_max_rss:", d_max_vsz/1024/1024)

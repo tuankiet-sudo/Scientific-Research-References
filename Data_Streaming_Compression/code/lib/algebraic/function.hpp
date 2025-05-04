@@ -112,7 +112,7 @@ class Polynomial {
         std::string str() const {
             std::string s = "";
             for (int i=this->degree; i>0; i--) {
-                s += std::to_string(this->coefficients[i]) + "x^" + std::to_string(i) + " ";
+                s += std::to_string(this->coefficients[i]) + "x^" + std::to_string(i) + " + ";
             }
 
             return s + std::to_string(this->coefficients[0]);
